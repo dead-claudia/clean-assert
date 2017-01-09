@@ -14,7 +14,7 @@ npm install --save clean-assert
 
 ## API
 
-See [here](https://github.com/isiahmeadows/clean-assert/blob/master/API.md).
+See [here](https://github.com/isiahmeadows/clean-assert/blob/master/api.md).
 
 ## Examples
 
