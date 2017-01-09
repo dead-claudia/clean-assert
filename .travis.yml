@@ -1,0 +1,48 @@
+language: node_js
+
+node_js:
+  - "4"
+  - "5"
+  - "6"
+  - "7"
+
+env:
+  - ENV=node
+
+before_install:
+  - if [[ "${ENV}" != 'node' ]]; then export DISPLAY=:99.0; fi
+  - if [[ "${ENV}" != 'node' ]]; then sh -e /etc/init.d/xvfb start; fi
+
+install:
+  - nvm install stable
+  - npm update -g npm
+  - npm install
+  - nvm install ${TRAVIS_NODE_VERSION}
+
+script:
+  - nvm use stable
+  - npm run lint
+  - nvm use ${TRAVIS_NODE_VERSION}
+  - ./travis.sh
+
+matrix:
+  include:
+    # Browser tests
+    - node_js: "6"
+      env: ENV=chrome
+      sudo: required
+      dist: trusty
+    - node_js: "6"
+      env: ENV=firefox
+      addons:
+        firefox: latest
+    - node_js: "6"
+      env: ENV=firefox-beta
+      addons:
+        firefox: latest-beta
+    - node_js: "6"
+      env: ENV=firefox-esr
+      addons:
+        firefox: latest-esr
+    - node_js: "6"
+      env: ENV=phantomjs
