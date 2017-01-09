@@ -1,6 +1,6 @@
 {
   "name": "clean-match",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple, fast, zero-dependency, ES2015+ aware deep matching utility",
   "scripts": {
     "lint": "eslint .",
@@ -13,6 +13,7 @@
     "minify": "uglifyjs clean-match.js --compress --mangle --comments > clean-match.min.js",
     "preversion": "npm run minify"
   },
+  "main": "clean-match.js",
   "files": [
     "clean-match.js",
     "clean-match.min.js",
