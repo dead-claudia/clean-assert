@@ -33,23 +33,11 @@ npm install --save clean-assert-util
 
 Just the basics, a common, non-volatile core.
 
-### assertUtil.inspect(object, ...opts?)
-
-```js
-assertUtil.inspect(object, ...opts)
-```
-
-An alias of Node's `util.inspect`, but resolved to use `util-inspect` in browsers. Much easier than using `util.inspect` directly, with less excess in the bundle.
-
-### class assertUtil.AssertionError
-
 ```js
 new assertUtil.AssertionError(message="", expected=undefined, actual=undefined)
 ```
 
 The assertion error constructor used in this assertion library. Don't worry, it's only used here, and the rest of Thallium really doesn't care what assertion library you use, if any. It simply checks for the error's `name` to be `"AssertionError"`, nothing else.
-
-### assertUtil.assert(condition, message?)
 
 ```js
 assertUtil.assert(condition, message="")
@@ -57,15 +45,19 @@ assertUtil.assert(condition, message="")
 
 The basic assert method. Most assertion libraries have some variant of this: test a `condition`, and if it's falsy, throw an assertion error with a `message`.
 
-### assertUtil.fail(message?)
-
 ```js
 assertUtil.fail(message="")
 ```
 
 The basic automatic failure method. Most assertion libraries have some variant of this: throw an assertion error with a `message`.
 
-### assertUtil.format(message, args, formatter?)
+### Pretty printing
+
+```js
+assertUtil.inspect(object, ...opts)
+```
+
+An alias of Node's `util.inspect`, but resolved to use `util-inspect` in browsers. Much easier than using `util.inspect` directly, with less excess in the bundle.
 
 ```js
 assertUtil.format(message, args, prettify=util.inspect)
@@ -73,21 +65,31 @@ assertUtil.format(message, args, prettify=util.inspect)
 
 Create a formatted message from the template `message`, using `args` to fill it in and `prettify` to pretty-print it to a string.
 
-### assertUtil.fail(message, args, formatter?)
-
 ```js
 assertUtil.fail(message, args, prettify=util.inspect)
 ```
 
 Throw a formatted assertion error, formatted with `assertUtil.format`, and with `args.expected` and `args.actual` being passed directly to the `assertUtil.AssertionError` constructor.
 
-### assertUtil.escape(string)
-
 ```js
 assertUtil.escape(string)
 ```
 
 Escape a string so that `assertUtil.format` returns the raw string instead of "pretty-printing" it (e.g. for function names injected into templates).
+
+### Utilities
+
+```js
+assertUtil.strictIs(a, b)
+```
+
+Perform strict equality (i.e. `===`), except `NaN`s are also considered equal. Similar to [`Object.is`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is), except that zeros are compared ignoring signs.
+
+```js
+assertUtil.looseIs(a, b)
+```
+
+Same as above, but using loose comparison (i.e. `==`). This still considers `NaN`s as equal
 
 ## License
 
