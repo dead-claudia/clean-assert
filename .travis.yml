@@ -21,7 +21,7 @@ install:
 
 script:
   - nvm use stable
-  - node make lint
+  - npm run lint
   - nvm use ${TRAVIS_NODE_VERSION}
   - ./travis.sh
 

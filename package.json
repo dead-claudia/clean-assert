@@ -13,6 +13,11 @@
     "minify": "uglifyjs clean-match.js --compress --mangle --comments > clean-match.min.js",
     "preversion": "npm run minify"
   },
+  "files": [
+    "clean-match.js",
+    "clean-match.min.js",
+    "index.d.ts"
+  ],
   "author": "Isiah Meadows",
   "license": "ISC",
   "devDependencies": {
