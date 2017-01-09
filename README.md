@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/isiahmeadows/clean-match.svg?branch=master)](https://travis-ci.org/isiahmeadows/clean-match)
+
 # clean-match
 
 A simple, fast, zero-dependency, ES2015+ aware deep matching utility, with support for ES5 environments. Tested in Node 4+ and PhantomJS 2.
