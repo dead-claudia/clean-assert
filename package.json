@@ -12,9 +12,9 @@
     "test:phantomjs": "karma start --colors --single-run --browsers PhantomJS"
   },
   "browser": {
-    "./inspect.js": "./node_modules/util-inspect/index.js"
+    "./inspect.js": "./browser-inspect.js"
   },
-  "files": ["index.js", "inspect.js", "index.d.ts"],
+  "files": ["browser-inspect.js", "index.js", "index.d.ts", "inspect.js"],
   "author": "Isiah Meadows",
   "license": "ISC",
   "devDependencies": {
