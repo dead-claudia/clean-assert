@@ -30,10 +30,10 @@ The basic assert method. Most assertion libraries have some variant of this: tes
 ### assert.fail(message?)
 
 ```js
-assert.fail(message="")
+assert.fail(message="", opts={})
 ```
 
-The basic automatic failure method. Most assertion libraries have some variant of this: throw an assertion error with a `message`.
+The basic automatic failure method. Most assertion libraries have some variant of this: throw an assertion error with a `message`. This also allows template messages interpolated with `opts`.
 
 ### class assert.AssertionError
 
