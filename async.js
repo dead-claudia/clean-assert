@@ -20,7 +20,7 @@ function isWrapableMethod(method, api) {
 
 function createAsyncMethodProxy(method) {
     return function proxy(expr) {
-        var rest = Array.from(arguments).slice(1)
+        var rest = [].slice.call(arguments, 1)
 
         return Promise.resolve(expr)
             .then(function (value) {
