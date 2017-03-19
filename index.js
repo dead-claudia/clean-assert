@@ -13,7 +13,6 @@ var throws = require("./lib/throws")
 var has = require("./lib/has")
 var includes = require("./lib/includes")
 var hasKeys = require("./lib/has-keys")
-var async = require("./async")
 
 exports.AssertionError = util.AssertionError
 exports.assert = util.assert
@@ -130,4 +129,4 @@ exports.notHasKeys = hasKeys.notHasKeys
 exports.notHasKeysDeep = hasKeys.notHasKeysDeep
 exports.notHasKeysMatch = hasKeys.notHasKeysMatch
 
-exports.async = async(exports)
+exports.async = require("./async")
