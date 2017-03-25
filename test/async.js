@@ -2,7 +2,9 @@
 
 /* global Promise */
 
-var async = require("../async")
+var util = require("../test-util")
+var assert = require("../index")
+var async = assert.async
 
 describe("clean-assert/async", function () {
     describe("async with equal lib", function () {
@@ -34,6 +36,21 @@ describe("clean-assert/async", function () {
 
         it("checks \"notOk\" with resolved null", function () {
             return async.notOk(Promise.resolve(null))
+        })
+    })
+
+    describe("failed cases", function () {
+        it("should fails with wrong assertion", function () {
+            return util.asyncFail("equal", Promise.resolve(1), 2)
+        })
+
+        it("rejections should be passed through untouched", function () {
+            var untouched = new Error("untouched")
+
+            return async.equal(Promise.reject(untouched), 2)
+            .catch(function (e) {
+                assert.equal(e, untouched)
+            })
         })
     })
 })

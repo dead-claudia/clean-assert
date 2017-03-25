@@ -26,12 +26,11 @@ function createAsyncMethodProxy(method) {
         }
 
         return Promise.resolve(expr)
-            .then(function (value) {
-                args[0] = value
+        .then(function (value) {
+            args[0] = value
 
-                method.apply(undefined, args)
-            }
-        )
+            method.apply(undefined, args)
+        })
     }
 }
 
