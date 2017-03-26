@@ -128,3 +128,5 @@ exports.notHasKeysAllMatch = hasKeys.notHasKeysAllMatch
 exports.notHasKeys = hasKeys.notHasKeys
 exports.notHasKeysDeep = hasKeys.notHasKeysDeep
 exports.notHasKeysMatch = hasKeys.notHasKeysMatch
+
+exports.async = require("./async")
