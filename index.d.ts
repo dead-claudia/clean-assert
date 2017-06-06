@@ -1,7 +1,11 @@
 /* tslint:disable */
 
+import * as async from "./async";
+
+export {async};
+
 export type Key = string | number | symbol;
-export type ObjectMap = {[key: string]: T} | {[key: number]: T};
+export type ObjectMap = {[key: string]: any} | {[key: number]: any};
 export function assert(condition: any, message?: string): void;
 
 export class AssertionError extends Error {
@@ -45,8 +49,8 @@ export function notArray(object: any): void;
 export function is(Type: new (...args: any[]) => any, object: any): void;
 export function not(Type: new (...args: any[]) => any, object: any): void;
 
-export function equal<T>(a: T, b: T): void;
-export function notEqual<T>(a: T, b: T): void;
+export function equal<T>(actual: T, expected: T): void;
+export function notEqual<T>(actual: T, expected: T): void;
 
 export function atLeast(n: number, limit: number): void;
 export function atMost(n: number, limit: number): void;
@@ -54,16 +58,16 @@ export function above(n: number, limit: number): void;
 export function below(n: number, limit: number): void;
 export function between(n: number, lower: number, upper: number): void;
 
-export function equalLoose(a: any, b: any): void;
-export function notEqualLoose(a: any, b: any): void;
+export function equalLoose(actual: any, expected: any): void;
+export function notEqualLoose(actual: any, expected: any): void;
 
 // Strict deep equality, checking prototypes as well
-export function deepEqual<T>(a: T, b: T): void;
-export function notDeepEqual<T>(a: T, b: T): void;
+export function deepEqual<T>(actual: T, expected: T): void;
+export function notDeepEqual<T>(actual: T, expected: T): void;
 
 // Purely structural deep equality
-export function match<T>(a: T, b: T): void;
-export function notMatch<T>(a: T, b: T): void;
+export function match<T>(actual: T, expected: T): void;
+export function notMatch<T>(actual: T, expected: T): void;
 
 // has own property, possibly equal to a value
 export function hasOwn(object: Object, key: Key): void;

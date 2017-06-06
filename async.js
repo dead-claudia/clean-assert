@@ -4,113 +4,132 @@
 
 var type = require("./lib/type")
 var equal = require("./lib/equal")
-var throws = require("./lib/throws")
+var throwsAsync = require("./lib/throws-async")
 var has = require("./lib/has")
 var includes = require("./lib/includes")
 var hasKeys = require("./lib/has-keys")
 
-function makeAsyncApi(api) {
-    return Object.keys(api).reduce(function (asyncApi, method) {
-        asyncApi[method] = createAsyncMethodProxy(api[method])
-
-        return asyncApi
-    }, {})
+function unary(method) {
+    return function (value) {
+        return Promise.resolve(value).then(method)
+    }
 }
 
-function createAsyncMethodProxy(method) {
-    return function proxy(expr) {
-        var args = [undefined]
-
-        for (var i = 1; i < arguments.length; i++) {
-            args.push(arguments[i])
-        }
-
-        return Promise.resolve(expr)
-        .then(function (value) {
-            args[0] = value
-
-            method.apply(undefined, args)
+function binary(method) {
+    return function (value, expected) {
+        return Promise.resolve(value).then(function (value) {
+            method(value, expected)
         })
     }
 }
 
-module.exports = makeAsyncApi({
-    ok: type.ok,
-    notOk: type.notOk,
-    isBoolean: type.isBoolean,
-    notBoolean: type.notBoolean,
-    isFunction: type.isFunction,
-    notFunction: type.notFunction,
-    isNumber: type.isNumber,
-    notNumber: type.notNumber,
-    isObject: type.isObject,
-    notObject: type.notObject,
-    isString: type.isString,
-    notString: type.notString,
-    isSymbol: type.isSymbol,
-    notSymbol: type.notSymbol,
-    exists: type.exists,
-    notExists: type.notExists,
-    isArray: type.isArray,
-    notArray: type.notArray,
-    is: type.is,
-    not: type.not,
+function ternary(method) {
+    return function (value, a, b) {
+        return Promise.resolve(value).then(function (value) {
+            method(value, a, b)
+        })
+    }
+}
 
-    equal: equal.equal,
-    notEqual: equal.notEqual,
-    equalLoose: equal.equalLoose,
-    notEqualLoose: equal.notEqualLoose,
-    deepEqual: equal.deepEqual,
-    notDeepEqual: equal.notDeepEqual,
-    match: equal.match,
-    notMatch: equal.notMatch,
-    atLeast: equal.atLeast,
-    atMost: equal.atMost,
-    above: equal.above,
-    below: equal.below,
-    between: equal.between,
-    closeTo: equal.closeTo,
-    notCloseTo: equal.notCloseTo,
+function optTernary(method) {
+    return function (object, a, b) {
+        if (arguments.length >= 3) {
+            return Promise.resolve(object).then(function (object) {
+                method(object, a, b)
+            })
+        } else {
+            return Promise.resolve(object).then(function (object) {
+                method(object, a)
+            })
+        }
+    }
+}
 
-    throws: throws.throws,
-    throwsMatch: throws.throwsMatch,
+exports.ok = unary(type.ok)
+exports.notOk = unary(type.notOk)
+exports.isBoolean = unary(type.isBoolean)
+exports.notBoolean = unary(type.notBoolean)
+exports.isFunction = unary(type.isFunction)
+exports.notFunction = unary(type.notFunction)
+exports.isNumber = unary(type.isNumber)
+exports.notNumber = unary(type.notNumber)
+exports.isObject = unary(type.isObject)
+exports.notObject = unary(type.notObject)
+exports.isString = unary(type.isString)
+exports.notString = unary(type.notString)
+exports.isSymbol = unary(type.isSymbol)
+exports.notSymbol = unary(type.notSymbol)
+exports.exists = unary(type.exists)
+exports.notExists = unary(type.notExists)
+exports.isArray = unary(type.isArray)
+exports.notArray = unary(type.notArray)
 
-    hasOwn: has.hasOwn,
-    notHasOwn: has.notHasOwn,
-    hasOwnLoose: has.hasOwnLoose,
-    notHasOwnLoose: has.notHasOwnLoose,
-    hasKey: has.hasKey,
-    notHasKey: has.notHasKey,
-    hasKeyLoose: has.hasKeyLoose,
-    notHasKeyLoose: has.notHasKeyLoose,
-    has: has.has,
-    notHas: has.notHas,
-    hasLoose: has.hasLoose,
-    notHasLoose: has.notHasLoose,
+exports.is = function (Type, object) {
+    return Promise.resolve(object).then(function (object) {
+        type.is(Type, object)
+    })
+}
 
-    includes: includes.includes,
-    includesDeep: includes.includesDeep,
-    includesMatch: includes.includesMatch,
-    includesAny: includes.includesAny,
-    includesAnyDeep: includes.includesAnyDeep,
-    includesAnyMatch: includes.includesAnyMatch,
-    notIncludesAll: includes.notIncludesAll,
-    notIncludesAllDeep: includes.notIncludesAllDeep,
-    notIncludesAllMatch: includes.notIncludesAllMatch,
-    notIncludes: includes.notIncludes,
-    notIncludesDeep: includes.notIncludesDeep,
-    notIncludesMatch: includes.notIncludesMatch,
+exports.not = function (Type, object) {
+    return Promise.resolve(object).then(function (object) {
+        type.not(Type, object)
+    })
+}
 
-    hasKeys: hasKeys.hasKeys,
-    hasKeysDeep: hasKeys.hasKeysDeep,
-    hasKeysMatch: hasKeys.hasKeysMatch,
-    hasKeysAny: hasKeys.hasKeysAny,
-    hasKeysAnyDeep: hasKeys.hasKeysAnyDeep,
-    hasKeysAnyMatch: hasKeys.hasKeysAnyMatch,
-    notHasKeysAll: hasKeys.notHasKeysAll,
-    notHasKeysAllDeep: hasKeys.notHasKeysAllDeep,
-    notHasKeysAllMatch: hasKeys.notHasKeysAllMatch,
-    notHasKeys: hasKeys.notHasKeys,
-    notHasKeysDeep: hasKeys.notHasKeysDeep,
-    notHasKeysMatch: hasKeys.notHasKeysMatch,
-})
+exports.equal = binary(equal.equal)
+exports.notEqual = binary(equal.notEqual)
+exports.equalLoose = binary(equal.equalLoose)
+exports.notEqualLoose = binary(equal.notEqualLoose)
+exports.deepEqual = binary(equal.deepEqual)
+exports.notDeepEqual = binary(equal.notDeepEqual)
+exports.match = binary(equal.match)
+exports.notMatch = binary(equal.notMatch)
+exports.atLeast = binary(equal.atLeast)
+exports.atMost = binary(equal.atMost)
+exports.above = binary(equal.above)
+exports.below = binary(equal.below)
+exports.between = ternary(equal.between)
+exports.closeTo = ternary(equal.closeTo)
+exports.notCloseTo = ternary(equal.notCloseTo)
+
+exports.throws = throwsAsync.throws
+exports.throwsMatch = throwsAsync.throwsMatch
+
+exports.hasOwn = optTernary(has.hasOwn)
+exports.notHasOwn = optTernary(has.notHasOwn)
+exports.hasOwnLoose = optTernary(has.hasOwnLoose)
+exports.notHasOwnLoose = optTernary(has.notHasOwnLoose)
+exports.hasKey = optTernary(has.hasKey)
+exports.notHasKey = optTernary(has.notHasKey)
+exports.hasKeyLoose = optTernary(has.hasKeyLoose)
+exports.notHasKeyLoose = optTernary(has.notHasKeyLoose)
+exports.has = optTernary(has.has)
+exports.notHas = optTernary(has.notHas)
+exports.hasLoose = optTernary(has.hasLoose)
+exports.notHasLoose = optTernary(has.notHasLoose)
+
+exports.includes = binary(includes.includes)
+exports.includesDeep = binary(includes.includesDeep)
+exports.includesMatch = binary(includes.includesMatch)
+exports.includesAny = binary(includes.includesAny)
+exports.includesAnyDeep = binary(includes.includesAnyDeep)
+exports.includesAnyMatch = binary(includes.includesAnyMatch)
+exports.notIncludesAll = binary(includes.notIncludesAll)
+exports.notIncludesAllDeep = binary(includes.notIncludesAllDeep)
+exports.notIncludesAllMatch = binary(includes.notIncludesAllMatch)
+exports.notIncludes = binary(includes.notIncludes)
+exports.notIncludesDeep = binary(includes.notIncludesDeep)
+exports.notIncludesMatch = binary(includes.notIncludesMatch)
+
+exports.hasKeys = binary(hasKeys.hasKeys)
+exports.hasKeysDeep = binary(hasKeys.hasKeysDeep)
+exports.hasKeysMatch = binary(hasKeys.hasKeysMatch)
+exports.hasKeysAny = binary(hasKeys.hasKeysAny)
+exports.hasKeysAnyDeep = binary(hasKeys.hasKeysAnyDeep)
+exports.hasKeysAnyMatch = binary(hasKeys.hasKeysAnyMatch)
+exports.notHasKeysAll = binary(hasKeys.notHasKeysAll)
+exports.notHasKeysAllDeep = binary(hasKeys.notHasKeysAllDeep)
+exports.notHasKeysAllMatch = binary(hasKeys.notHasKeysAllMatch)
+exports.notHasKeys = binary(hasKeys.notHasKeys)
+exports.notHasKeysDeep = binary(hasKeys.notHasKeysDeep)
+exports.notHasKeysMatch = binary(hasKeys.notHasKeysMatch)

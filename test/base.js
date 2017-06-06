@@ -44,336 +44,366 @@ describe("clean-assert (base)", function () {
         })
     })
 
-    describe("ok()", function () {
-        it("works", function () {
-            assert.ok(true)
-            assert.ok(1)
-            assert.ok(Infinity)
-            assert.ok("foo")
-            assert.ok({})
-            assert.ok([])
-            assert.ok(new Date())
-            if (typeof Symbol === "function") assert.ok(Symbol())
+    util.test("ok", function (ok, fail) {
+        return [
+            function () { return ok(true) },
+            function () { return ok(1) },
+            function () { return ok(Infinity) },
+            function () { return ok("foo") },
+            function () { return ok({}) },
+            function () { return ok([]) },
+            function () { return ok(new Date()) },
+            function () {
+                if (typeof Symbol === "function") return ok(Symbol())
+                return undefined
+            },
 
-            util.fail("ok")
-            util.fail("ok", undefined)
-            util.fail("ok", null)
-            util.fail("ok", false)
-            util.fail("ok", 0)
-            util.fail("ok", "")
-            util.fail("ok", NaN)
-        })
+            function () { fail() },
+            function () { fail(undefined) },
+            function () { fail(null) },
+            function () { fail(false) },
+            function () { fail(0) },
+            function () { fail("") },
+            function () { fail(NaN) },
+        ]
     })
 
-    describe("notOk()", function () {
-        it("works", function () {
-            util.fail("notOk", true)
-            util.fail("notOk", 1)
-            util.fail("notOk", Infinity)
-            util.fail("notOk", "foo")
-            util.fail("notOk", {})
-            util.fail("notOk", [])
-            util.fail("notOk", new Date())
-            if (typeof Symbol === "function") util.fail("notOk", Symbol())
+    util.test("notOk", function (notOk, fail) {
+        return [
+            function () { return fail(true) },
+            function () { return fail(1) },
+            function () { return fail(Infinity) },
+            function () { return fail("foo") },
+            function () { return fail({}) },
+            function () { return fail([]) },
+            function () { return fail(new Date()) },
+            function () {
+                if (typeof Symbol === "function") return fail(Symbol())
+                return undefined
+            },
 
-            assert.notOk()
-            assert.notOk(undefined)
-            assert.notOk(null)
-            assert.notOk(false)
-            assert.notOk(0)
-            assert.notOk("")
-            assert.notOk(NaN)
-        })
+            function () { return notOk() },
+            function () { return notOk(undefined) },
+            function () { return notOk(null) },
+            function () { return notOk(false) },
+            function () { return notOk(0) },
+            function () { return notOk("") },
+            function () { return notOk(NaN) },
+        ]
     })
 
-    describe("equal()", function () {
-        it("works", function () {
-            assert.equal(0, 0)
-            assert.equal(1, 1)
-            assert.equal(null, null)
-            assert.equal(undefined, undefined)
-            assert.equal(Infinity, Infinity)
-            assert.equal(NaN, NaN)
-            assert.equal("", "")
-            assert.equal("foo", "foo")
+    util.test("equal", function (equal, fail) {
+        return [
+            function () { return equal(0, 0) },
+            function () { return equal(1, 1) },
+            function () { return equal(null, null) },
+            function () { return equal(undefined, undefined) },
+            function () { return equal(Infinity, Infinity) },
+            function () { return equal(NaN, NaN) },
+            function () { return equal("", "") },
+            function () { return equal("foo", "foo") },
+            function () {
+                var obj = {}
 
-            var obj = {}
+                equal(obj, obj)
+            },
 
-            assert.equal(obj, obj)
-
-            util.fail("equal", {}, {})
-            util.fail("equal", null, undefined)
-            util.fail("equal", 0, 1)
-            util.fail("equal", 1, "1")
-        })
+            function () { return fail("equal", {}, {}) },
+            function () { return fail("equal", null, undefined) },
+            function () { return fail("equal", 0, 1) },
+            function () { return fail("equal", 1, "1") },
+        ]
     })
 
-    describe("notEqual()", function () {
-        it("works", function () {
-            util.fail("notEqual", 0, 0)
-            util.fail("notEqual", 1, 1)
-            util.fail("notEqual", null, null)
-            util.fail("notEqual", undefined, undefined)
-            util.fail("notEqual", Infinity, Infinity)
-            util.fail("notEqual", NaN, NaN)
-            util.fail("notEqual", "", "")
-            util.fail("notEqual", "foo", "foo")
+    util.test("notEqual", function (notEqual, fail) {
+        return [
+            function () { return fail(0, 0) },
+            function () { return fail(1, 1) },
+            function () { return fail(null, null) },
+            function () { return fail(undefined, undefined) },
+            function () { return fail(Infinity, Infinity) },
+            function () { return fail(NaN, NaN) },
+            function () { return fail("", "") },
+            function () { return fail("foo", "foo") },
+            function () {
+                var obj = {}
 
-            var obj = {}
+                fail(obj, obj)
+            },
 
-            util.fail("notEqual", obj, obj)
-
-            assert.notEqual({}, {})
-            assert.notEqual(null, undefined)
-            assert.notEqual(0, 1)
-            assert.notEqual(1, "1")
-        })
+            function () { return notEqual({}, {}) },
+            function () { return notEqual(null, undefined) },
+            function () { return notEqual(0, 1) },
+            function () { return notEqual(1, "1") },
+        ]
     })
 
-    describe("equalLoose()", function () {
-        it("works", function () {
-            assert.equalLoose(0, 0)
-            assert.equalLoose(1, 1)
-            assert.equalLoose(null, null)
-            assert.equalLoose(undefined, undefined)
-            assert.equalLoose(Infinity, Infinity)
-            assert.equalLoose(NaN, NaN)
-            assert.equalLoose("", "")
-            assert.equalLoose("foo", "foo")
-            assert.equalLoose(null, undefined)
-            assert.equalLoose(1, "1")
+    util.test("equalLoose", function (equalLoose, fail) {
+        return [
+            function () { return equalLoose(0, 0) },
+            function () { return equalLoose(1, 1) },
+            function () { return equalLoose(null, null) },
+            function () { return equalLoose(undefined, undefined) },
+            function () { return equalLoose(Infinity, Infinity) },
+            function () { return equalLoose(NaN, NaN) },
+            function () { return equalLoose("", "") },
+            function () { return equalLoose("foo", "foo") },
+            function () { return equalLoose(null, undefined) },
+            function () { return equalLoose(1, "1") },
+            function () {
+                var obj = {}
 
-            var obj = {}
+                return equalLoose(obj, obj)
+            },
 
-            assert.equalLoose(obj, obj)
-
-            util.fail("equalLoose", {}, {})
-            util.fail("equalLoose", 0, 1)
-        })
+            function () { return fail({}, {}) },
+            function () { return fail(0, 1) },
+        ]
     })
 
-    describe("notEqualLoose()", function () {
-        it("works", function () {
-            util.fail("notEqualLoose", 0, 0)
-            util.fail("notEqualLoose", 1, 1)
-            util.fail("notEqualLoose", null, null)
-            util.fail("notEqualLoose", undefined, undefined)
-            util.fail("notEqualLoose", Infinity, Infinity)
-            util.fail("notEqualLoose", NaN, NaN)
-            util.fail("notEqualLoose", "", "")
-            util.fail("notEqualLoose", "foo", "foo")
-            util.fail("notEqualLoose", null, undefined)
-            util.fail("notEqualLoose", 1, "1")
+    util.test("notEqualLoose", function (notEqualLoose, fail) {
+        return [
+            function () { return fail(0, 0) },
+            function () { return fail(1, 1) },
+            function () { return fail(null, null) },
+            function () { return fail(undefined, undefined) },
+            function () { return fail(Infinity, Infinity) },
+            function () { return fail(NaN, NaN) },
+            function () { return fail("", "") },
+            function () { return fail("foo", "foo") },
+            function () { return fail(null, undefined) },
+            function () { return fail(1, "1") },
+            function () {
+                var obj = {}
 
-            var obj = {}
+                return fail(obj, obj)
+            },
 
-            util.fail("notEqualLoose", obj, obj)
-
-            assert.notEqualLoose({}, {})
-            assert.notEqualLoose(0, 1)
-        })
+            function () { return notEqualLoose({}, {}) },
+            function () { return notEqualLoose(0, 1) },
+        ]
     })
 
-    describe("deepEqual()", function () {
-        it("works", function () {
-            assert.deepEqual(0, 0)
-            assert.deepEqual(1, 1)
-            assert.deepEqual(null, null)
-            assert.deepEqual(undefined, undefined)
-            assert.deepEqual(Infinity, Infinity)
-            assert.deepEqual(NaN, NaN)
-            assert.deepEqual("", "")
-            assert.deepEqual("foo", "foo")
+    util.test("deepEqual", function (deepEqual, fail) {
+        return [
+            function () { return deepEqual(0, 0) },
+            function () { return deepEqual(1, 1) },
+            function () { return deepEqual(null, null) },
+            function () { return deepEqual(undefined, undefined) },
+            function () { return deepEqual(Infinity, Infinity) },
+            function () { return deepEqual(NaN, NaN) },
+            function () { return deepEqual("", "") },
+            function () { return deepEqual("foo", "foo") },
+            function () {
+                var obj = {}
 
-            var obj = {}
+                return deepEqual(obj, obj)
+            },
 
-            assert.deepEqual(obj, obj)
-
-            assert.deepEqual({}, {})
-            util.fail("deepEqual", null, undefined)
-            util.fail("deepEqual", 0, 1)
-            util.fail("deepEqual", 1, "1")
-            assert.deepEqual({a: [2, 3], b: [4]}, {a: [2, 3], b: [4]})
-        })
+            function () { return deepEqual({}, {}) },
+            function () { return fail(null, undefined) },
+            function () { return fail(0, 1) },
+            function () { return fail(1, "1") },
+            function () {
+                return deepEqual({a: [2, 3], b: [4]}, {a: [2, 3], b: [4]})
+            },
+        ]
     })
 
-    describe("notDeepEqual()", function () {
-        it("works", function () {
-            util.fail("notDeepEqual", 0, 0)
-            util.fail("notDeepEqual", 1, 1)
-            util.fail("notDeepEqual", null, null)
-            util.fail("notDeepEqual", undefined, undefined)
-            util.fail("notDeepEqual", Infinity, Infinity)
-            util.fail("notDeepEqual", NaN, NaN)
-            util.fail("notDeepEqual", "", "")
-            util.fail("notDeepEqual", "foo", "foo")
+    util.test("notDeepEqual", function (notDeepEqual, fail) {
+        return [
+            function () { return fail(0, 0) },
+            function () { return fail(1, 1) },
+            function () { return fail(null, null) },
+            function () { return fail(undefined, undefined) },
+            function () { return fail(Infinity, Infinity) },
+            function () { return fail(NaN, NaN) },
+            function () { return fail("", "") },
+            function () { return fail("foo", "foo") },
+            function () {
+                var obj = {}
 
-            var obj = {}
+                return fail(obj, obj)
+            },
 
-            util.fail("notDeepEqual", obj, obj)
-
-            util.fail("notDeepEqual", {}, {})
-            assert.notDeepEqual(null, undefined)
-            assert.notDeepEqual(0, 1)
-            assert.notDeepEqual(1, "1")
-            util.fail("notDeepEqual", {a: [2, 3], b: [4]}, {a: [2, 3], b: [4]})
-        })
+            function () { return fail({}, {}) },
+            function () { return notDeepEqual(null, undefined) },
+            function () { return notDeepEqual(0, 1) },
+            function () { return notDeepEqual(1, "1") },
+            function () {
+                return fail({a: [2, 3], b: [4]}, {a: [2, 3], b: [4]})
+            },
+        ]
     })
 
     function F() { this.value = 1 }
     F.prototype.prop = 1
 
-    describe("hasOwn()", function () {
-        it("works", function () {
-            assert.hasOwn({prop: 1}, "prop")
-            assert.hasOwn({prop: 1}, "prop", 1)
-            assert.hasOwn(new F(), "value", 1)
+    util.test("hasOwn", function (hasOwn, fail) {
+        return [
+            function () { return hasOwn({prop: 1}, "prop") },
+            function () { return hasOwn({prop: 1}, "prop", 1) },
+            function () { return hasOwn(new F(), "value", 1) },
 
-            util.fail("hasOwn", {prop: 1}, "toString")
-            util.fail("hasOwn", {prop: 1}, "value")
-            util.fail("hasOwn", {prop: 1}, "prop", 2)
-            util.fail("hasOwn", {prop: 1}, "prop", "1")
-            util.fail("hasOwn", new F(), "prop")
-            util.fail("hasOwn", new F(), "prop", 1)
-            util.fail("hasOwn", new F(), "value", 2)
-        })
+            function () { return fail({prop: 1}, "toString") },
+            function () { return fail({prop: 1}, "value") },
+            function () { return fail({prop: 1}, "prop", 2) },
+            function () { return fail({prop: 1}, "prop", "1") },
+            function () { return fail(new F(), "prop") },
+            function () { return fail(new F(), "prop", 1) },
+            function () { return fail(new F(), "value", 2) },
+        ]
     })
 
-    describe("notHasOwn()", function () {
-        it("works", function () {
-            util.fail("notHasOwn", {prop: 1}, "prop")
-            util.fail("notHasOwn", {prop: 1}, "prop", 1)
-            util.fail("notHasOwn", new F(), "value", 1)
+    util.test("notHasOwn", function (notHasOwn, fail) {
+        return [
+            function () { return fail({prop: 1}, "prop") },
+            function () { return fail({prop: 1}, "prop", 1) },
+            function () { return fail(new F(), "value", 1) },
 
-            assert.notHasOwn({prop: 1}, "toString")
-            assert.notHasOwn({prop: 1}, "value")
-            assert.notHasOwn({prop: 1}, "prop", 2)
-            assert.notHasOwn({prop: 1}, "prop", "1")
-            assert.notHasOwn(new F(), "prop")
-            assert.notHasOwn(new F(), "prop", 1)
-            assert.notHasOwn(new F(), "value", 2)
-        })
+            function () { return notHasOwn({prop: 1}, "toString") },
+            function () { return notHasOwn({prop: 1}, "value") },
+            function () { return notHasOwn({prop: 1}, "prop", 2) },
+            function () { return notHasOwn({prop: 1}, "prop", "1") },
+            function () { return notHasOwn(new F(), "prop") },
+            function () { return notHasOwn(new F(), "prop", 1) },
+            function () { return notHasOwn(new F(), "value", 2) },
+        ]
     })
 
-    describe("hasOwnLoose()", function () {
-        it("works", function () {
-            assert.hasOwnLoose({prop: 1}, "prop", 1)
-            assert.hasOwnLoose(new F(), "value", 1)
-            assert.hasOwnLoose({prop: 1}, "prop", "1")
+    util.test("hasOwnLoose", function (hasOwnLoose, fail) {
+        return [
+            function () { return hasOwnLoose({prop: 1}, "prop", 1) },
+            function () { return hasOwnLoose(new F(), "value", 1) },
+            function () { return hasOwnLoose({prop: 1}, "prop", "1") },
 
-            util.fail("hasOwnLoose", {prop: 1}, "prop", 2)
-            util.fail("hasOwnLoose", new F(), "prop", 1)
-            util.fail("hasOwnLoose", new F(), "value", 2)
-        })
+            function () { return fail({prop: 1}, "prop", 2) },
+            function () { return fail(new F(), "prop", 1) },
+            function () { return fail(new F(), "value", 2) },
+        ]
     })
 
-    describe("notHasOwnLoose()", function () {
-        it("works", function () {
-            util.fail("notHasOwnLoose", {prop: 1}, "prop", 1)
-            util.fail("notHasOwnLoose", new F(), "value", 1)
-            util.fail("notHasOwnLoose", {prop: 1}, "prop", "1")
+    util.test("notHasOwnLoose", function (notHasOwnLoose, fail) {
+        return [
+            function () { return fail({prop: 1}, "prop", 1) },
+            function () { return fail(new F(), "value", 1) },
+            function () { return fail({prop: 1}, "prop", "1") },
 
-            assert.notHasOwnLoose({prop: 1}, "prop", 2)
-            assert.notHasOwnLoose(new F(), "prop", 1)
-            assert.notHasOwnLoose(new F(), "value", 2)
-        })
+            function () { return notHasOwnLoose({prop: 1}, "prop", 2) },
+            function () { return notHasOwnLoose(new F(), "prop", 1) },
+            function () { return notHasOwnLoose(new F(), "value", 2) },
+        ]
     })
 
-    describe("hasKey()", function () {
-        it("works", function () {
-            assert.hasKey({prop: 1}, "prop")
-            assert.hasKey({prop: 1}, "prop", 1)
-            assert.hasKey(new F(), "value", 1)
-            assert.hasKey({prop: 1}, "toString")
-            assert.hasKey(new F(), "prop")
-            assert.hasKey(new F(), "prop", 1)
+    util.test("hasKey", function (hasKey, fail) {
+        return [
+            function () { return hasKey({prop: 1}, "prop") },
+            function () { return hasKey({prop: 1}, "prop", 1) },
+            function () { return hasKey(new F(), "value", 1) },
+            function () { return hasKey({prop: 1}, "toString") },
+            function () { return hasKey(new F(), "prop") },
+            function () { return hasKey(new F(), "prop", 1) },
 
-            util.fail("hasKey", {prop: 1}, "value")
-            util.fail("hasKey", {prop: 1}, "prop", 2)
-            util.fail("hasKey", {prop: 1}, "prop", "1")
-            util.fail("hasKey", new F(), "value", 2)
-        })
+            function () { return fail({prop: 1}, "value") },
+            function () { return fail({prop: 1}, "prop", 2) },
+            function () { return fail({prop: 1}, "prop", "1") },
+            function () { return fail(new F(), "value", 2) },
+        ]
     })
 
-    describe("notHasKey()", function () {
-        it("works", function () {
-            util.fail("notHasKey", {prop: 1}, "prop")
-            util.fail("notHasKey", {prop: 1}, "prop", 1)
-            util.fail("notHasKey", new F(), "value", 1)
-            util.fail("notHasKey", {prop: 1}, "toString")
-            util.fail("notHasKey", new F(), "prop")
-            util.fail("notHasKey", new F(), "prop", 1)
+    util.test("notHasKey", function (notHasKey, fail) {
+        return [
+            function () { return fail({prop: 1}, "prop") },
+            function () { return fail({prop: 1}, "prop", 1) },
+            function () { return fail(new F(), "value", 1) },
+            function () { return fail({prop: 1}, "toString") },
+            function () { return fail(new F(), "prop") },
+            function () { return fail(new F(), "prop", 1) },
 
-            assert.notHasKey({prop: 1}, "value")
-            assert.notHasKey({prop: 1}, "prop", 2)
-            assert.notHasKey({prop: 1}, "prop", "1")
-            assert.notHasKey(new F(), "value", 2)
-        })
+            function () { return notHasKey({prop: 1}, "value") },
+            function () { return notHasKey({prop: 1}, "prop", 2) },
+            function () { return notHasKey({prop: 1}, "prop", "1") },
+            function () { return notHasKey(new F(), "value", 2) },
+        ]
     })
 
-    describe("hasKeyLoose()", function () {
-        it("works", function () {
-            assert.hasKeyLoose({prop: 1}, "prop", 1)
-            assert.hasKeyLoose(new F(), "value", 1)
-            assert.hasKeyLoose(new F(), "prop", 1)
-            assert.hasKeyLoose({prop: 1}, "prop", "1")
+    util.test("hasKeyLoose", function (hasKeyLoose, fail) {
+        return [
+            function () { return hasKeyLoose({prop: 1}, "prop", 1) },
+            function () { return hasKeyLoose(new F(), "value", 1) },
+            function () { return hasKeyLoose(new F(), "prop", 1) },
+            function () { return hasKeyLoose({prop: 1}, "prop", "1") },
 
-            util.fail("hasKeyLoose", {prop: 1}, "prop", 2)
-            util.fail("hasKeyLoose", new F(), "value", 2)
-        })
+            function () { return fail({prop: 1}, "prop", 2) },
+            function () { return fail(new F(), "value", 2) },
+        ]
     })
 
-    describe("notHasKeyLoose()", function () {
-        it("works", function () {
-            util.fail("notHasKeyLoose", {prop: 1}, "prop", 1)
-            util.fail("notHasKeyLoose", new F(), "value", 1)
-            util.fail("notHasKeyLoose", new F(), "prop", 1)
-            util.fail("notHasKeyLoose", {prop: 1}, "prop", "1")
+    util.test("notHasKeyLoose", function (notHasKeyLoose, fail) {
+        return [
+            function () { return fail({prop: 1}, "prop", 1) },
+            function () { return fail(new F(), "value", 1) },
+            function () { return fail(new F(), "prop", 1) },
+            function () { return fail({prop: 1}, "prop", "1") },
 
-            assert.notHasKeyLoose({prop: 1}, "prop", 2)
-            assert.notHasKeyLoose(new F(), "value", 2)
-        })
+            function () { return notHasKeyLoose({prop: 1}, "prop", 2) },
+            function () { return notHasKeyLoose(new F(), "value", 2) },
+        ]
     })
 
     if (typeof Map !== "undefined") {
-        describe("has()", function () {
-            it("works", function () {
-                assert.has(new Map([["prop", 1]]), "prop")
-                assert.has(new Map([["prop", 1]]), "prop", 1)
+        util.test("has", function (has, fail) {
+            return [
+                function () { return has(new Map([["prop", 1]]), "prop") },
+                function () { return has(new Map([["prop", 1]]), "prop", 1) },
 
-                util.fail("has", new Map([["prop", 1]]), "value")
-                util.fail("has", new Map([["prop", 1]]), "prop", 2)
-                util.fail("has", new Map([["prop", 1]]), "prop", "1")
-            })
+                function () { return fail(new Map([["prop", 1]]), "value") },
+                function () { return fail(new Map([["prop", 1]]), "prop", 2) },
+                function () {
+                    return fail(new Map([["prop", 1]]), "prop", "1")
+                },
+            ]
         })
 
-        describe("notHas()", function () {
-            it("works", function () {
-                util.fail("notHas", new Map([["prop", 1]]), "prop")
-                util.fail("notHas", new Map([["prop", 1]]), "prop", 1)
+        util.test("notHas", function (notHas, fail) {
+            return [
+                function () { return fail(new Map([["prop", 1]]), "prop") },
+                function () { return fail(new Map([["prop", 1]]), "prop", 1) },
 
-                assert.notHas(new Map([["prop", 1]]), "value")
-                assert.notHas(new Map([["prop", 1]]), "prop", 2)
-                assert.notHas(new Map([["prop", 1]]), "prop", "1")
-            })
+                function () { return notHas(new Map([["prop", 1]]), "value") },
+                function () {
+                    return notHas(new Map([["prop", 1]]), "prop", 2)
+                },
+                function () {
+                    return notHas(new Map([["prop", 1]]), "prop", "1")
+                },
+            ]
         })
 
-        describe("hasLoose()", function () {
-            it("works", function () {
-                assert.hasLoose(new Map([["prop", 1]]), "prop", 1)
-                assert.hasLoose(new Map([["prop", 1]]), "prop", "1")
+        util.test("hasLoose", function (hasLoose, fail) {
+            return [
+                function () {
+                    return hasLoose(new Map([["prop", 1]]), "prop", 1)
+                },
+                function () {
+                    return hasLoose(new Map([["prop", 1]]), "prop", "1")
+                },
 
-                util.fail("hasLoose", new Map([["prop", 1]]), "prop", 2)
-            })
+                function () { return fail(new Map([["prop", 1]]), "prop", 2) },
+            ]
         })
 
-        describe("notHasLoose()", function () {
-            it("works", function () {
-                util.fail("notHasLoose", new Map([["prop", 1]]), "prop", 1)
-                util.fail("notHasLoose", new Map([["prop", 1]]), "prop", "1")
+        util.test("notHasLoose", function (notHasLoose, fail) {
+            return [
+                function () { return fail(new Map([["prop", 1]]), "prop", 1) },
+                function () {
+                    return fail(new Map([["prop", 1]]), "prop", "1")
+                },
 
-                assert.notHasLoose(new Map([["prop", 1]]), "prop", 2)
-            })
+                function () {
+                    return notHasLoose(new Map([["prop", 1]]), "prop", 2)
+                },
+            ]
         })
     }
 })
