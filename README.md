@@ -18,7 +18,7 @@ See [here](https://github.com/isiahmeadows/clean-assert/blob/master/api.md).
 
 ## Examples
 
-See the [tests](https://github.com/isiahmeadows/clean-assert/tree/master/tests). This assertion framework uses itself to test.
+See the [tests](https://github.com/isiahmeadows/clean-assert/tree/master/test). This assertion framework uses itself to test.
 
 ## Contributing
 
