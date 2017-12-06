@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/isiahmeadows/clean-assert.svg?branch=master)](https://travis-ci.org/isiahmeadows/cclean-assert)
+[![Build Status](https://travis-ci.org/isiahmeadows/clean-assert.svg?branch=master)](https://travis-ci.org/isiahmeadows/clean-assert)
 
 # clean-assert
 
