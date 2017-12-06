@@ -4,6 +4,8 @@
 
 A simple TDD assertion library, initially designed for [Thallium](https://www.npmjs.com/package/thallium), but factored out as a separate module for use elsewhere. It's also modular, with its core factored out into [`clean-assert-util`](https://www.npmjs.com/package/clean-assert-util) so you can write your own assertions that look just like this one, without any hassle and without declaring a direct dependency on this (that package is much more stable).
 
+**Note:** If you're concerned about the very minimal Git/version history, this library *is* actively maintained, and I personally use this with production projects; it's just very stable and what you might consider mostly done. Probably one of those 0.00001% of projects that are generally bug-free.
+
 ## Installation
 
 Install via [npm](https://www.npmjs.com/package/clean-assert):
