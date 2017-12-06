@@ -11,7 +11,7 @@ Do note that you don't have to use these, and matter of fact, any assertion libr
 - [Range checking](#sec-range)
 - [Exception checking](#sec-exception)
 - [Key checking](#sec-key)
-- [Includes in array](#sec-includes)
+- [Includes in iterable](#sec-includes)
 - [Has key-value pairs in object](#sec-has)
 
 <a id="sec-basic"></a>
@@ -144,6 +144,15 @@ assert.notArray(value)
 ```
 
 Assert whether a value is an array.
+
+### Iterables
+
+```js
+assert.isIterable(value)
+assert.notIterable(value)
+```
+
+Assert whether a value is an iterable object.
 
 ### Instance type
 
@@ -300,7 +309,7 @@ assert.notHasLoose(object, key, value)
 Assert whether a [map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) has a key either strictly (`===`/`!==`) or loosely (`==`/`!=`) equal to a value.
 
 <a id="sec-includes"></a>
-## Includes in array
+## Includes in iterable
 
 There's also some larger methods to test many possibilities at once.
 
@@ -308,58 +317,58 @@ There's also some larger methods to test many possibilities at once.
 
 ```js
 // Single
-assert.includes(array, value)
-assert.includesDeep(array, value)
-assert.includesMatch(array, value)
+assert.includes(iter, value)
+assert.includesDeep(iter, value)
+assert.includesMatch(iter, value)
 
 // Multiple
-assert.includes(array, [...values])
-assert.includesDeep(array, [...values])
-assert.includesMatch(array, [...values])
+assert.includes(iter, [...values])
+assert.includesDeep(iter, [...values])
+assert.includesMatch(iter, [...values])
 ```
 
-Assert an array includes one or more values.
+Assert an iterable includes one or more values.
 
 ### Includes some values
 
 ```js
-assert.includesAny(array, [...values])
-assert.includesAnyDeep(array, [...values])
-assert.includesAnyMatch(array, [...values])
+assert.includesAny(iter, [...values])
+assert.includesAnyDeep(iter, [...values])
+assert.includesAnyMatch(iter, [...values])
 ```
 
-Assert an array includes at least one of a list of values
+Assert an iterable includes at least one of a list of values
 
 ### Missing some values
 
 ```js
-assert.notIncludesAll(array, [...values])
-assert.notIncludesAllDeep(array, [...values])
-assert.notIncludesAllMatch(array, [...values])
+assert.notIncludesAll(iter, [...values])
+assert.notIncludesAllDeep(iter, [...values])
+assert.notIncludesAllMatch(iter, [...values])
 ```
 
-Assert an array is missing at least one of a list of values
+Assert an iterable is missing at least one of a list of values
 
 ### Missing all values
 
 ```js
 // Single
-assert.notIncludes(array, value)
-assert.notIncludesDeep(array, value)
-assert.notIncludesMatch(array, value)
+assert.notIncludes(iter, value)
+assert.notIncludesDeep(iter, value)
+assert.notIncludesMatch(iter, value)
 
 // Multiple
-assert.notIncludes(array, [...values])
-assert.notIncludesDeep(array, [...values])
-assert.notIncludesMatch(array, [...values])
+assert.notIncludes(iter, [...values])
+assert.notIncludesDeep(iter, [...values])
+assert.notIncludesMatch(iter, [...values])
 ```
 
-Assert an array does not include one or more values.
+Assert an iterable does not include one or more values.
 
 <a id="sec-has"></a>
 ## Has key-value pairs in object
 
-Just like testing for multiple values in arrays, you can also test for multiple key-value pairs in objects. These are checked to be own properties, not inherited, and it can be considered a more flexible shorthand for multiple `assert.hasOwn` calls.
+Just like testing for multiple values in iterables, you can also test for multiple key-value pairs in objects. These are checked to be own properties, not inherited, and it can be considered a more flexible shorthand for multiple `assert.hasOwn` calls.
 
 ### Has keys
 
@@ -370,7 +379,7 @@ assert.notHasKeysAll(object, [...keys]) // missing some
 assert.notHasKeys(object, [...keys]) // missing all
 ```
 
-Assert whether an array has one or more keys. The comments detail how they're checked.
+Assert whether an object has one or more keys. The comments detail how they're checked.
 
 ### Has all key-value pairs
 
@@ -380,7 +389,7 @@ assert.hasKeysDeep(object, {key: value, ...})
 assert.hasKeysMatch(object, {key: value, ...})
 ```
 
-Assert an array includes one or more values.
+Assert an object includes one or more values.
 
 ### Has some key-value pairs
 
@@ -390,7 +399,7 @@ assert.hasKeysAnyDeep(object, {key: value, ...})
 assert.hasKeysAnyMatch(object, {key: value, ...})
 ```
 
-Assert an array includes at least one of a list of values
+Assert an object includes at least one of a list of key/value pairs
 
 ### Missing some key-value pairs
 
@@ -400,7 +409,7 @@ assert.notHasKeysAllDeep(object, {key: value, ...})
 assert.notHasKeysAllMatch(object, {key: value, ...})
 ```
 
-Assert an array is missing at least one of a list of values
+Assert an object is missing at least one of a list of key/value pairs
 
 ### Missing all key-value pairs
 
@@ -410,4 +419,4 @@ assert.notHasKeysDeep(object, {key: value, ...})
 assert.notHasKeysMatch(object, {key: value, ...})
 ```
 
-Assert an array does not include one or more values.
+Assert an object does not include one or more key/value pairs.

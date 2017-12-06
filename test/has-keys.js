@@ -4,6 +4,11 @@ var assert = require("../index")
 var util = require("../test-util")
 
 describe("clean-assert (has keys)", function () {
+    function check(func) {
+        func(util.toArray)
+        func(util.iterable)
+    }
+
     // It's much easier to find problems when the tests are generated.
     function shallow(name, opts) {
         function run(succeed) {
@@ -20,24 +25,6 @@ describe("clean-assert (has keys)", function () {
             }
         }
 
-        function iterator(entries) {
-            var object = {}
-
-            object[util.symbolIterator] = function () {
-                return {
-                    index: 0,
-                    next: function () {
-                        if (this.index === entries.length) {
-                            return {done: true, value: undefined}
-                        } else {
-                            return {done: false, value: entries[this.index++]}
-                        }
-                    },
-                }
-            }
-            return object
-        }
-
         describe(name + "()", function () {
             it("exists", function () {
                 assert.isFunction(assert[name])
@@ -45,27 +32,25 @@ describe("clean-assert (has keys)", function () {
 
             if (opts.keys) {
                 it("checks number keys", function () {
-                    run(!opts.invert,
-                        {1: true, 2: true, 3: false},
-                        [1])
+                    check(function (list) {
+                        run(!opts.invert,
+                            {1: true, 2: true, 3: false},
+                            list(1))
+                    })
                 })
 
                 it("checks string keys", function () {
-                    run(!opts.invert,
-                        {foo: true, bar: false, baz: 1},
-                        ["foo"])
+                    check(function (list) {
+                        run(!opts.invert,
+                            {foo: true, bar: false, baz: 1},
+                            list("foo"))
+                    })
                 })
 
-                it("checks iterable number keys", function () {
-                    run(!opts.invert,
-                        {1: true, 2: true, 3: false},
-                        iterator([1]))
-                })
-
-                it("checks iterable string keys", function () {
-                    run(!opts.invert,
-                        {foo: true, bar: false, baz: 1},
-                        iterator(["foo"]))
+                it("checks empty key lists", function () {
+                    check(function (list) {
+                        run(true, {foo: true, bar: false, baz: 1}, list())
+                    })
                 })
             }
 

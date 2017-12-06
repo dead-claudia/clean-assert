@@ -6,165 +6,221 @@ var util = require("../test-util")
 /* global Symbol */
 
 describe("clean-assert (type)", function () {
-    function testType(name, callback, raw) {
-        var positive = raw ? name.toLowerCase() : "is" + name
-        var negated = raw ? "not" + name : "not" + name
+    function testType(name, steps, raw) {
+        util.test(raw ? name.toLowerCase() : "is" + name, steps)
 
-        describe(positive + "()", function () {
-            it("works", function () {
-                callback(assert[positive], util.fail.bind(undefined, positive))
-            })
-        })
-
-        describe(negated + "()", function () {
-            it("works", function () {
-                callback(util.fail.bind(undefined, negated), assert[negated])
-            })
+        util.test("not" + name, function (method, fail) {
+            return steps(fail, method)
         })
     }
 
     testType("Boolean", function (is, not) {
-        is(true)
-        is(false)
-        not(0)
-        not(1)
-        not(NaN)
-        not(Infinity)
-        not("foo")
-        not("")
-        not(null)
-        not({})
-        not([])
-        not(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") not(Symbol())
+        return [
+            function () { return is(true) },
+            function () { return is(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            function () { return not([]) },
+            function () { return not(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
     })
 
     testType("Number", function (is, not) {
-        not(true)
-        not(false)
-        is(0)
-        is(1)
-        is(NaN)
-        is(Infinity)
-        not("foo")
-        not("")
-        not(null)
-        not({})
-        not([])
-        not(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") not(Symbol())
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return is(0) },
+            function () { return is(1) },
+            function () { return is(NaN) },
+            function () { return is(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            function () { return not([]) },
+            function () { return not(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
     })
 
     testType("Function", function (is, not) {
-        not(true)
-        not(false)
-        not(0)
-        not(1)
-        not(NaN)
-        not(Infinity)
-        not("foo")
-        not("")
-        not(null)
-        not({})
-        not([])
-        is(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") not(Symbol())
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            function () { return not([]) },
+            function () { return not(util.iterable()) },
+            function () { return is(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
     })
 
     testType("Object", function (is, not) {
-        not(true)
-        not(false)
-        not(0)
-        not(1)
-        not(NaN)
-        not(Infinity)
-        not("foo")
-        not("")
-        not(null)
-        is({})
-        is([])
-        not(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") not(Symbol())
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return is({}) },
+            function () { return is([]) },
+            function () { return is(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
     })
 
     testType("String", function (is, not) {
-        not(true)
-        not(false)
-        not(0)
-        not(1)
-        not(NaN)
-        not(Infinity)
-        is("foo")
-        is("")
-        not(null)
-        not({})
-        not([])
-        not(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") not(Symbol())
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return is("foo") },
+            function () { return is("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            function () { return not([]) },
+            function () { return not(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
     })
 
     testType("Symbol", function (is, not) {
-        not(true)
-        not(false)
-        not(0)
-        not(1)
-        not(NaN)
-        not(Infinity)
-        not("foo")
-        not("")
-        not(null)
-        not({})
-        not([])
-        not(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") is(Symbol())
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            function () { return not([]) },
+            function () { return not(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return is(Symbol()) }
+                : undefined,
+        ]
     })
 
     testType("Exists", function (is, not) {
-        is(true)
-        is(false)
-        is(0)
-        is(1)
-        is(NaN)
-        is(Infinity)
-        is("foo")
-        is("")
-        not(null)
-        is({})
-        is([])
-        is(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") is(Symbol())
+        return [
+            function () { return is(true) },
+            function () { return is(false) },
+            function () { return is(0) },
+            function () { return is(1) },
+            function () { return is(NaN) },
+            function () { return is(Infinity) },
+            function () { return is("foo") },
+            function () { return is("") },
+            function () { return not(null) },
+            function () { return is({}) },
+            function () { return is([]) },
+            function () { return is(util.iterable()) },
+            function () { return is(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return is(Symbol()) }
+                : undefined,
+        ]
     }, true)
 
     testType("Array", function (is, not) {
-        not(true)
-        not(false)
-        not(0)
-        not(1)
-        not(NaN)
-        not(Infinity)
-        not("foo")
-        not("")
-        not(null)
-        not({})
-        is([])
-        not(function () {})
-        not(undefined)
-        not()
-        if (typeof Symbol === "function") not(Symbol())
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            function () { return is([]) },
+            function () { return not(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
+    })
+
+    testType("Iterable", function (is, not) {
+        return [
+            function () { return not(true) },
+            function () { return not(false) },
+            function () { return not(0) },
+            function () { return not(1) },
+            function () { return not(NaN) },
+            function () { return not(Infinity) },
+            function () { return not("foo") },
+            function () { return not("") },
+            function () { return not(null) },
+            function () { return not({}) },
+            typeof [][util.symbolIterator] === "function"
+                ? function () { return is([]) }
+                : function () { return not([]) },
+            function () { return is(util.iterable()) },
+            function () { return not(function () {}) },
+            function () { return not(undefined) },
+            function () { return not() },
+            typeof Symbol === "function"
+                ? function () { return not(Symbol()) }
+                : undefined,
+        ]
     })
 
     describe("is()", function () {

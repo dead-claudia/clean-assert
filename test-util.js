@@ -13,6 +13,39 @@ if (typeof global.Symbol === "function" &&
     exports.symbolIterator = global.Symbol.iterator
 }
 
+exports.identity = function (x) {
+    return x
+}
+
+exports.toArray = function () {
+    var args = new Array(arguments.length)
+
+    for (var i = 0; i < arguments.length; i++) {
+        args[i] = arguments[i]
+    }
+
+    return args
+}
+
+exports.iterable = function () {
+    var object = {}
+    var entries = exports.toArray.apply(undefined, arguments)
+
+    object[exports.symbolIterator] = function () {
+        return {
+            index: 0,
+            next: function () {
+                if (this.index === entries.length) {
+                    return {done: true, value: undefined}
+                } else {
+                    return {done: false, value: entries[this.index++]}
+                }
+            },
+        }
+    }
+    return object
+}
+
 exports.test = function (name, func) {
     describe(name + "()", function () {
         it("works", function () {
@@ -32,7 +65,9 @@ exports.test = function (name, func) {
                     AssertionError)
             })
 
-            for (var i = 0; i < steps.length; i++) steps[i]()
+            for (var i = 0; i < steps.length; i++) {
+                if (steps[i] != null) steps[i]()
+            }
         })
     })
 
@@ -40,8 +75,7 @@ exports.test = function (name, func) {
         it("works", function () {
             var method = assert.async[name]
             var steps = func(method, function () {
-                return method.apply(undefined, arguments)
-                .then(function () {
+                return method.apply(undefined, arguments).then(function () {
                     throw new AssertionError(
                         "Expected t." + name + " to throw an AssertionError",
                         AssertionError)
@@ -51,7 +85,7 @@ exports.test = function (name, func) {
             })
 
             return steps.reduce(
-                function (p, step) { return p.then(step) },
+                function (p, step) { return step != null ? p.then(step) : p },
                 Promise.resolve())
         })
     })
@@ -86,11 +120,11 @@ exports.failAsync = function (name) {
     }
 
     return assert.async[name].apply(undefined, args)
-    .then(function () {
-        throw new AssertionError(
-            "Expected t." + name + " to throw an AssertionError",
-            AssertionError)
-    }, function (e) {
-        if (!(e instanceof AssertionError)) throw e
-    })
+        .then(function () {
+            throw new AssertionError(
+                "Expected t." + name + " to throw an AssertionError",
+                AssertionError)
+        }, function (e) {
+            if (!(e instanceof AssertionError)) throw e
+        })
 }

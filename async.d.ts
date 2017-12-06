@@ -30,6 +30,9 @@ export function notExists(object: any): Promise<void>;
 export function isArray(object: any): Promise<void>;
 export function notArray(object: any): Promise<void>;
 
+export function isIterable(object: any): Promise<void>;
+export function notIterable(object: any): Promise<void>;
+
 export function is(Type: new (...args: any[]) => any, object: any): Promise<void>;
 export function not(Type: new (...args: any[]) => any, object: any): Promise<void>;
 
@@ -91,24 +94,24 @@ export function notCloseTo(actual: Async<number>, expected: number, epsilon?: nu
 
 // includes list of values
 // includes all
-export function includes<T>(array: Async<T[]>, values: T | T[]): Promise<void>;
-export function includesDeep<T>(array: Async<T[]>, values: T | T[]): Promise<void>;
-export function includesMatch<T>(array: Async<T[]>, values: T | T[]): Promise<void>;
+export function includes<T>(iter: Async<Iterable<T>>, values: T | Iterable<T>): Promise<void>;
+export function includesDeep<T>(iter: Async<Iterable<T>>, values: T | Iterable<T>): Promise<void>;
+export function includesMatch<T>(iter: Async<Iterable<T>>, values: T | Iterable<T>): Promise<void>;
 
 // includes some
-export function includesAny<T>(array: Async<T[]>, values: T[]): Promise<void>;
-export function includesDeepAny<T>(array: Async<T[]>, values: T[]): Promise<void>;
-export function includesMatchAny<T>(array: Async<T[]>, values: T[]): Promise<void>;
+export function includesAny<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
+export function includesDeepAny<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
+export function includesMatchAny<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
 
 // missing some
-export function notIncludesAll<T>(array: Async<T[]>, values: T[]): Promise<void>;
-export function notIncludesDeepAll<T>(array: Async<T[]>, values: T[]): Promise<void>;
-export function notIncludesMatchAll<T>(array: Async<T[]>, values: T[]): Promise<void>;
+export function notIncludesAll<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
+export function notIncludesDeepAll<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
+export function notIncludesMatchAll<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
 
 // missing all
-export function notIncludes<T>(array: Async<T[]>, values: T[]): Promise<void>;
-export function notIncludesDeep<T>(array: Async<T[]>, values: T[]): Promise<void>;
-export function notIncludesMatch<T>(array: Async<T[]>, values: T[]): Promise<void>;
+export function notIncludes<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
+export function notIncludesDeep<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
+export function notIncludesMatch<T>(iter: Async<Iterable<T>>, values: Iterable<T>): Promise<void>;
 
 // match Object.keys(object) with list of keys
 export function hasKeys(object: Async<Object>, keys: Iterable<Key>): Promise<void>;

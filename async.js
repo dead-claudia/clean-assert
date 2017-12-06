@@ -63,6 +63,8 @@ exports.exists = unary(type.exists)
 exports.notExists = unary(type.notExists)
 exports.isArray = unary(type.isArray)
 exports.notArray = unary(type.notArray)
+exports.isIterable = unary(type.isIterable)
+exports.notIterable = unary(type.notIterable)
 
 exports.is = function (Type, object) {
     return Promise.resolve(object).then(function (object) {

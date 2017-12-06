@@ -36,6 +36,8 @@ exports.exists = type.exists
 exports.notExists = type.notExists
 exports.isArray = type.isArray
 exports.notArray = type.notArray
+exports.isIterable = type.isIterable
+exports.notIterable = type.notIterable
 exports.is = type.is
 exports.not = type.not
 

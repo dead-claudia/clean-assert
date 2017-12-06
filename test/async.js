@@ -50,9 +50,9 @@ describe("clean-assert/async", function () {
             var untouched = new Error("untouched")
 
             return assert.async.equal(Promise.reject(untouched), 2)
-            .catch(function (e) {
-                assert.equal(e, untouched)
-            })
+                .catch(function (e) {
+                    assert.equal(e, untouched)
+                })
         })
     })
 })

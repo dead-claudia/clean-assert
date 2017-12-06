@@ -71,6 +71,9 @@ export function notExists(object: any): void;
 export function isArray(object: any): void;
 export function notArray(object: any): void;
 
+export function isIterable(object: any): void;
+export function notIterable(object: any): void;
+
 export function is(Type: new (...args: any[]) => any, object: any): void;
 export function not(Type: new (...args: any[]) => any, object: any): void;
 
@@ -143,24 +146,24 @@ export function notCloseTo(actual: number, expected: number, epsilon?: number): 
 
 // includes list of values
 // includes all
-export function includes<T>(array: T[], values: T | T[]): void;
-export function includesDeep<T>(array: T[], values: T | T[]): void;
-export function includesMatch<T>(array: T[], values: T | T[]): void;
+export function includes<T>(iter: Iterable<T>, values: T | Iterable<T>): void;
+export function includesDeep<T>(iter: Iterable<T>, values: T | Iterable<T>): void;
+export function includesMatch<T>(iter: Iterable<T>, values: T | Iterable<T>): void;
 
 // includes some
-export function includesAny<T>(array: T[], values: T[]): void;
-export function includesDeepAny<T>(array: T[], values: T[]): void;
-export function includesMatchAny<T>(array: T[], values: T[]): void;
+export function includesAny<T>(iter: Iterable<T>, values: Iterable<T>): void;
+export function includesDeepAny<T>(iter: Iterable<T>, values: Iterable<T>): void;
+export function includesMatchAny<T>(iter: Iterable<T>, values: Iterable<T>): void;
 
 // missing some
-export function notIncludesAll<T>(array: T[], values: T[]): void;
-export function notIncludesDeepAll<T>(array: T[], values: T[]): void;
-export function notIncludesMatchAll<T>(array: T[], values: T[]): void;
+export function notIncludesAll<T>(iter: Iterable<T>, values: Iterable<T>): void;
+export function notIncludesDeepAll<T>(iter: Iterable<T>, values: Iterable<T>): void;
+export function notIncludesMatchAll<T>(iter: Iterable<T>, values: Iterable<T>): void;
 
 // missing all
-export function notIncludes<T>(array: T[], values: T[]): void;
-export function notIncludesDeep<T>(array: T[], values: T[]): void;
-export function notIncludesMatch<T>(array: T[], values: T[]): void;
+export function notIncludes<T>(iter: Iterable<T>, values: Iterable<T>): void;
+export function notIncludesDeep<T>(iter: Iterable<T>, values: Iterable<T>): void;
+export function notIncludesMatch<T>(iter: Iterable<T>, values: Iterable<T>): void;
 
 // match Object.keys(object) with list of keys
 export function hasKeys(object: Object, keys: Iterable<Key>): void;
