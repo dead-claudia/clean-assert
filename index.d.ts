@@ -8,6 +8,31 @@ export type Key = string | number | symbol;
 export type ObjectMap = {[key: string]: any} | {[key: number]: any};
 export function assert(condition: any, message?: string): void;
 
+// In case this isn't already declared
+declare global {
+    interface SymbolConstructor {
+        iterator: symbol;
+    }
+
+    const Symbol: SymbolConstructor;
+}
+
+declare global {
+    interface Iterator<T> {
+        next(value: T): void;
+        throw?(value: Error): void;
+        return?(value: any): void;
+    }
+
+    interface Iterable<T> {
+        [Symbol.iterator](): Iterator<T>;
+    }
+
+    interface Array<T> {
+        [Symbol.iterator](): Iterator<T>;
+    }
+}
+
 export class AssertionError extends Error {
     name: "AssertionError";
     message: string;
@@ -138,10 +163,10 @@ export function notIncludesDeep<T>(array: T[], values: T[]): void;
 export function notIncludesMatch<T>(array: T[], values: T[]): void;
 
 // match Object.keys(object) with list of keys
-export function hasKeys(object: Object, keys: Key[]): void;
-export function notHasKeysAll(object: Object, keys: Key[]): void;
-export function hasKeysAny(object: Object, keys: Key[]): void;
-export function notHasKeys(object: Object, keys: Key[]): void;
+export function hasKeys(object: Object, keys: Iterable<Key>): void;
+export function notHasKeysAll(object: Object, keys: Iterable<Key>): void;
+export function hasKeysAny(object: Object, keys: Iterable<Key>): void;
+export function notHasKeys(object: Object, keys: Iterable<Key>): void;
 
 // match Object.keys(object) with keys
 // includes all

@@ -4,7 +4,7 @@ var assert = require("../index")
 var util = require("../test-util")
 
 describe("clean-assert (has keys)", function () {
-    // It"s much easier to find problems when the tests are generated.
+    // It's much easier to find problems when the tests are generated.
     function shallow(name, opts) {
         function run(succeed) {
             var args = []
@@ -18,6 +18,24 @@ describe("clean-assert (has keys)", function () {
             } else {
                 return util.fail.apply(undefined, [name].concat(args))
             }
+        }
+
+        function iterator(entries) {
+            var object = {}
+
+            object[util.symbolIterator] = function () {
+                return {
+                    index: 0,
+                    next: function () {
+                        if (this.index === entries.length) {
+                            return {done: true, value: undefined}
+                        } else {
+                            return {done: false, value: entries[this.index++]}
+                        }
+                    },
+                }
+            }
+            return object
         }
 
         describe(name + "()", function () {
@@ -36,6 +54,18 @@ describe("clean-assert (has keys)", function () {
                     run(!opts.invert,
                         {foo: true, bar: false, baz: 1},
                         ["foo"])
+                })
+
+                it("checks iterable number keys", function () {
+                    run(!opts.invert,
+                        {1: true, 2: true, 3: false},
+                        iterator([1]))
+                })
+
+                it("checks iterable string keys", function () {
+                    run(!opts.invert,
+                        {foo: true, bar: false, baz: 1},
+                        iterator(["foo"]))
                 })
             }
 

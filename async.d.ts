@@ -111,10 +111,10 @@ export function notIncludesDeep<T>(array: Async<T[]>, values: T[]): Promise<void
 export function notIncludesMatch<T>(array: Async<T[]>, values: T[]): Promise<void>;
 
 // match Object.keys(object) with list of keys
-export function hasKeys(object: Async<Object>, keys: Key[]): Promise<void>;
-export function notHasKeysAll(object: Async<Object>, keys: Key[]): Promise<void>;
-export function hasKeysAny(object: Async<Object>, keys: Key[]): Promise<void>;
-export function notHasKeys(object: Async<Object>, keys: Key[]): Promise<void>;
+export function hasKeys(object: Async<Object>, keys: Iterable<Key>): Promise<void>;
+export function notHasKeysAll(object: Async<Object>, keys: Iterable<Key>): Promise<void>;
+export function hasKeysAny(object: Async<Object>, keys: Iterable<Key>): Promise<void>;
+export function notHasKeys(object: Async<Object>, keys: Iterable<Key>): Promise<void>;
 
 // match Object.keys(object) with keys
 // includes all

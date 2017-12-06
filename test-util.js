@@ -6,6 +6,13 @@
 var assert = require("./index")
 var AssertionError = assert.AssertionError
 
+exports.symbolIterator = "@@iterator"
+
+if (typeof global.Symbol === "function" &&
+        typeof global.Symbol.iterator === "symbol") {
+    exports.symbolIterator = global.Symbol.iterator
+}
+
 exports.test = function (name, func) {
     describe(name + "()", function () {
         it("works", function () {
