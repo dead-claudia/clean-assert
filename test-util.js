@@ -1,6 +1,6 @@
 "use strict"
 
-/* global Promise */
+/* global Promise, Symbol */
 /* eslint-env mocha */
 
 var assert = require("./index")
@@ -8,9 +8,8 @@ var AssertionError = assert.AssertionError
 
 exports.symbolIterator = "@@iterator"
 
-if (typeof global.Symbol === "function" &&
-        typeof global.Symbol.iterator === "symbol") {
-    exports.symbolIterator = global.Symbol.iterator
+if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    exports.symbolIterator = Symbol.iterator
 }
 
 exports.identity = function (x) {
