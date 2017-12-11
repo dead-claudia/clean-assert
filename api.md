@@ -171,10 +171,10 @@ There are also, of course, several equality methods.
 ### Primitive equality
 
 ```js
-assert.equal(expected, actual)         // strict, expected === actual
-assert.equalLoose(expected, actual)    // loose, expected == actual
-assert.notEqual(expected, actual)      // strict, expected !== actual
-assert.notEqualLoose(expected, actual) // loose, expected != actual
+assert.equal(actual, expected)         // strict, expected === actual
+assert.equalLoose(actual, expected)    // loose, expected == actual
+assert.notEqual(actual, expected)      // strict, expected !== actual
+assert.notEqualLoose(actual, expected) // loose, expected != actual
 ```
 
 Assert whether a value equals another value, with strict or loose equality.
@@ -184,8 +184,8 @@ Note: if you're checking floats/decimals for equality, don't use this method, be
 ### Floating point equality
 
 ```js
-assert.closeTo(expected, actual, tolerance=1e-10)
-assert.notCloseTo(expected, actual, tolerance=1e-10)
+assert.closeTo(actual, expected, tolerance=1e-10)
+assert.notCloseTo(actual, expected, tolerance=1e-10)
 ```
 
 Assert whether a float/decimal is equal to a certain value, given an optional tolerance (since floats [have a habit](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html) of [being imprecise](http://softwareengineering.stackexchange.com/a/101170)). This is the preferred way to compare two floats for equality.
@@ -202,10 +202,10 @@ The default tolerance is for convenience - you shouldn't need to specify how pre
 ### Deep equality
 
 ```js
-assert.deepEqual(expected, actual)
-assert.match(expected, actual)
-assert.notDeepEqual(expected, actual)
-assert.notMatch(expected, actual)
+assert.deepEqual(actual, expected)
+assert.match(actual, expected)
+assert.notDeepEqual(actual, expected)
+assert.notMatch(actual, expected)
 ```
 
 Assert whether a value deeply equals another value. `deepEqual` and `notDeepEqual` check the prototypes as well, and use the [`match.strict`](./other.md#match-strict) method internally, but `match` and `notMatch` only check the properties (with a few caveats), and use the [`match.match`](./other.md#match-match) method internally. See the documentation for those two methods if you want more info.
