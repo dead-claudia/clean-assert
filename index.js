@@ -6,7 +6,7 @@
  * keep the file size manageable.
  */
 
-var util = require("clean-assert-util")
+var util = require("./lib/util")
 var type = require("./lib/type")
 var equal = require("./lib/equal")
 var throws = require("./lib/throws")
@@ -16,6 +16,8 @@ var hasKeys = require("./lib/has-keys")
 
 exports.AssertionError = util.AssertionError
 exports.assert = util.assert
+exports.escape = util.escape
+exports.inspect = require("./lib/inspect")
 exports.fail = util.fail
 
 exports.ok = type.ok

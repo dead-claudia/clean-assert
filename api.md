@@ -17,7 +17,7 @@ Do note that you don't have to use these, and matter of fact, any assertion libr
 <a id="sec-basic"></a>
 ## Basic methods/properties
 
-Just like any assertion library, this has the obligatory basics. These are just re-exported from [`clean-assert-util`](https://www.npmjs.com/package/clean-assert-util).
+Just like any assertion library, this has the obligatory basics.
 
 ### assert.assert(condition, message?)
 

@@ -22,7 +22,6 @@ module.exports = function (config) {
         },
 
         files: [
-            "https://cdnjs.cloudflare.com/ajax/libs/es6-promise/4.1.0/es6-promise.auto.min.js",
             "./test/**/*.js",
         ],
         preprocessors: {

@@ -1,7 +1,6 @@
 "use strict"
 
 var assert = require("../index")
-var inspect = require("clean-assert-util").inspect
 
 describe("clean-assert (assertion error)", function () {
     var AssertionError = assert.AssertionError
@@ -21,8 +20,8 @@ describe("clean-assert (assertion error)", function () {
 
         if (e[prop] !== expected) {
             throw new Error("Expected e." + prop + " to equal " +
-                inspect(expected) + ", but found " +
-                inspect(e[prop]))
+                assert.inspect(expected) + ", but found " +
+                assert.inspect(e[prop]))
         }
     }
 

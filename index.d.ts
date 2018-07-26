@@ -37,6 +37,34 @@ export class AssertionError extends Error {
     constructor(message?: string, expected?: any, actual?: any);
 }
 
+export function format(message: string, args: ObjectMap, prettify?: (value: any) => string): string;
+export function escape(message: string): string;
+
+export interface InspectOptions {
+    showHidden?: boolean;
+    depth?: number;
+    colors?: boolean;
+    customInspect?: boolean;
+}
+
+export interface InspectStyles {
+    special: string;
+    number: string;
+    boolean: string;
+    undefined: string;
+    null: string;
+    string: string;
+    symbol: string;
+    date: string;
+    regexp: string;
+}
+
+export const inspect: {
+    (object: any, options?: InspectOptions): string;
+    colors: {[key: string]: [number, number]};
+    styles: InspectStyles;
+};
+
 export function fail(message: string): void;
 export function fail(message: string, args: ObjectMap, prettify?: (value: any) => string): void;
 
