@@ -15,8 +15,6 @@
     "lib",
     "index.js",
     "index.d.ts",
-    "async.js",
-    "async.d.ts",
     "api.md"
   ],
   "author": "Isiah Meadows",

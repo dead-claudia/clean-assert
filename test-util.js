@@ -1,6 +1,6 @@
 "use strict"
 
-/* global Promise, Symbol */
+/* global Symbol */
 /* eslint-env mocha */
 
 var assert = require("./index")
@@ -69,25 +69,6 @@ exports.test = function (name, func) {
             }
         })
     })
-
-    describe("async." + name + "()", function () {
-        it("works", function () {
-            var method = assert.async[name]
-            var steps = func(method, function () {
-                return method.apply(undefined, arguments).then(function () {
-                    throw new AssertionError(
-                        "Expected t." + name + " to throw an AssertionError",
-                        AssertionError)
-                }, function (e) {
-                    if (!(e instanceof AssertionError)) throw e
-                })
-            })
-
-            return steps.reduce(
-                function (p, step) { return step != null ? p.then(step) : p },
-                Promise.resolve())
-        })
-    })
 }
 
 exports.fail = function (name) {
@@ -109,21 +90,4 @@ exports.fail = function (name) {
     throw new AssertionError(
         "Expected t." + name + " to throw an AssertionError",
         AssertionError)
-}
-
-exports.failAsync = function (name) {
-    var args = []
-
-    for (var i = 1; i < arguments.length; i++) {
-        args.push(arguments[i])
-    }
-
-    return assert.async[name].apply(undefined, args)
-        .then(function () {
-            throw new AssertionError(
-                "Expected t." + name + " to throw an AssertionError",
-                AssertionError)
-        }, function (e) {
-            if (!(e instanceof AssertionError)) throw e
-        })
 }

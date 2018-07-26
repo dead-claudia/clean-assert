@@ -1,9 +1,5 @@
 /* tslint:disable */
 
-import * as async from "./async";
-
-export {async};
-
 export type Key = string | number | symbol;
 export type ObjectMap = {[key: string]: any} | {[key: number]: any};
 export function assert(condition: any, message?: string): void;
