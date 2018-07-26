@@ -1,0 +1,44 @@
+{
+  "name": "clean-assert-util",
+  "version": "1.0.1",
+  "description": "Common utilities for `clean-assert`",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "eslint . && npm run test:node",
+    "test:all": "eslint . && npm run test:node && npm run test:chrome && npm run test:firefox && npm run test:phantomjs",
+    "test:node": "mocha --colors",
+    "test:chrome": "karma start --colors --single-run --browsers Chrome",
+    "test:firefox": "karma start --colors --single-run --browsers Firefox",
+    "test:phantomjs": "karma start --colors --single-run --browsers PhantomJS"
+  },
+  "browser": {
+    "./inspect.js": "./browser-inspect.js"
+  },
+  "files": [
+    "browser-inspect.js",
+    "index.js",
+    "index.d.ts",
+    "inspect.js"
+  ],
+  "author": "Isiah Meadows",
+  "license": "ISC",
+  "devDependencies": {
+    "browserify": "^13.0.1",
+    "eslint": "^3.13.0",
+    "eslint-config-isiahmeadows": "^0.1.8",
+    "karma": "^1.1.0",
+    "karma-browserify": "^5.0.5",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-mocha": "^1.1.1",
+    "karma-phantomjs-launcher": "^1.0.2",
+    "mocha": "^3.2.0",
+    "watchify": "^3.7.0"
+  },
+  "dependencies": {
+    "util-inspect": "^0.1.8"
+  },
+  "repository": "isiahmeadows/clean-assert-util",
+  "bugs": "https://github.com/isiahmeadows/clean-assert-util/issues",
+  "homepage": "https://github.com/isiahmeadows/clean-assert-util#readme"
+}
