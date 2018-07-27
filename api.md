@@ -1,11 +1,14 @@
 # Assertions
 
-Within `clean-assert`, there are literally 100 different assertions. I've separated them all into several groups, so it's a bit easier to parse and look through.
+```js
+const assert = require("assert")
+```
+
+Within `clean-assert`, there are about 75 different assertions, but they're each variations of the same few concepts. I've separated them all into several groups, so it's a bit easier to parse and look through.
 
 Do note that you don't have to use these, and matter of fact, any assertion library works with this. You could even use Chai if you wanted to. Consider this a useful built-in assertion library in case you prefer batteries included.
 
 - [Basic methods/properties](#sec-basic)
-- [Utility methods](#sec-utility)
 - [Type checking](#sec-type)
 - [Equality](#sec-equality)
 - [Range checking](#sec-range)
@@ -13,6 +16,7 @@ Do note that you don't have to use these, and matter of fact, any assertion libr
 - [Key checking](#sec-key)
 - [Includes in iterable](#sec-includes)
 - [Has key-value pairs in object](#sec-has)
+- [Utility methods](#sec-utility)
 
 <a id="sec-basic"></a>
 ## Basic methods/properties
@@ -22,18 +26,35 @@ Just like any assertion library, this has the obligatory basics.
 ### assert.assert(condition, message?)
 
 ```js
-assert.assert(condition, message="")
+assert.assert(condition, message="", actual=undefined, expected=undefined)
 ```
 
-The basic assert method. Most assertion libraries have some variant of this: test a `condition`, and if it's falsy, throw an assertion error with a `message`.
+The basic assert method. Most assertion libraries have some variant of this: test a `condition`, and if it's falsy, throw an assertion error with a `message`. You can also set the `actual` and `expected` of the resulting assertion error using this, where `message` is just a template accepting `{actual}` and `{expected}` parameters.
+
+The last two parameters are so you can create easy assertions on the spot, or even customize existing ones, without the this silly nonsense:
+
+```js
+// AssertionError: Something isn't right
+assert(!something.isntRight(), "Something isn't right")
+```
+
+Instead, this could look like this, with beautiful error messages to match:
+
+```js
+// AssertionError: Something isn't right: expected 1, found 2
+assert(!something.isntRight(),
+    "Something isn't right: expected {expected}, found {actual}",
+    good, bad
+)
+```
 
 ### assert.fail(message?)
 
 ```js
-assert.fail(message="", opts={})
+assert.fail(message="", actual=undefined, expected=undefined)
 ```
 
-The basic automatic failure method. Most assertion libraries have some variant of this: throw an assertion error with a `message`. This also allows template messages interpolated with `opts`.
+This is sugar for `assert.assert(false, ...args)`.
 
 ### class assert.AssertionError
 
@@ -42,52 +63,6 @@ new assert.AssertionError(message="", expected=undefined, actual=undefined)
 ```
 
 The assertion error constructor used in this assertion library. Don't worry, it's only used here, and the rest of Thallium really doesn't care what assertion library you use, if any. It simply checks for the error's `name` to be `"AssertionError"`, nothing else.
-
-<a id="sec-utility"></a>
-## Utility methods
-
-This also has several utility methods, so you can create your own assertions and still make them just as clean, neat, and native-looking as the built-in ones. No more of this:
-
-```js
-assert(something.isntRight(), "Something isn't right")
-// AssertionError: Something isn't right
-```
-
-Instead, this could look like this, with beautiful error messages to match:
-
-```js
-if (something.isntRight()) {
-    assert.fail("Something isn't right: expected {expected}, found {actual}", {
-        expected: good,
-        actual: bad,
-    })
-}
-// AssertionError: Something isn't right: expected 1, found 2
-```
-
-### assert.format(message, args, formatter?)
-
-```js
-assert.format(message, args, prettify=util.inspect)
-```
-
-Create a formatted message from the template `message`, using `args` to fill it in and `prettify` to pretty-print it to a string.
-
-### assert.fail(message, args, formatter?)
-
-```js
-assert.fail(message, args, prettify=util.inspect)
-```
-
-Throw a formatted assertion error, formatted with `assert.format`, and with `args.expected` and `args.actual` being passed directly to the `assert.AssertionError` constructor.
-
-### assert.escape(string)
-
-```js
-assert.escape(string)
-```
-
-Escape a string so that `assert.format` returns the raw string instead of "pretty-printing" it (e.g. for function names injected into templates).
 
 <a id="sec-type"></a>
 ## Type checking
@@ -208,7 +183,7 @@ assert.notDeepEqual(actual, expected)
 assert.notMatch(actual, expected)
 ```
 
-Assert whether a value deeply equals another value. `deepEqual` and `notDeepEqual` check the prototypes as well, and use the [`match.strict`](./other.md#match-strict) method internally, but `match` and `notMatch` only check the properties (with a few caveats), and use the [`match.match`](./other.md#match-match) method internally. See the documentation for those two methods if you want more info.
+Assert whether a value deeply equals another value. `deepEqual` and `notDeepEqual` check the prototypes as well, and use the [`assert.matchStrict(a, b)`](#assertmatchstricta-b) method internally, but `match` and `notMatch` only check the properties (with a few caveats), and use the [`assert.matchLoose(a, b)`](#assertmatchloosea-b) method internally. See the documentation for those two methods if you want more info.
 
 <a id="sec-range"></a>
 ## Range checking
@@ -313,6 +288,15 @@ Assert whether a [map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/R
 
 There's also some larger methods to test many possibilities at once.
 
+It may seem like there's a lot of methods here, and that's pretty true, but it's simpler than it looks. Here's a quick overview of how they're sorted:
+
+              |     shallow      |     strict deep      |   structural deep
+--------------|------------------|----------------------|-----------------------
+includes all  | `includes`       | `includesDeep`       | `includesMatch`
+includes some | `includesAny`    | `includesAnyDeep`    | `includesAnyMatch`
+missing some  | `notIncludesAll` | `notIncludesAllDeep` | `notIncludesAllMatch`
+missing all   | `notIncludes`    | `notIncludesDeep`    | `notIncludesMatch`
+
 ### Includes all values
 
 ```js
@@ -370,6 +354,15 @@ Assert an iterable does not include one or more values.
 
 Just like testing for multiple values in iterables, you can also test for multiple key-value pairs in objects. These are checked to be own properties, not inherited, and it can be considered a more flexible shorthand for multiple `assert.hasOwn` calls.
 
+It may seem like there's a lot of methods here, and that's pretty true, but it's simpler than it looks. Here's a quick overview of how they're sorted:
+
+              |     shallow     |    strict deep      |   structural deep
+--------------|-----------------|---------------------|----------------------
+includes all  | `hasKeys`       | `hasKeysDeep`       | `hasKeysMatch`
+includes some | `hasKeysAny`    | `hasKeysAnyDeep`    | `hasKeysAnyMatch`
+missing some  | `notHasKeysAll` | `notHasKeysAllDeep` | `notHasKeysAllMatch`
+missing all   | `notHasKeys`    | `notHasKeysDeep`    | `notHasKeysMatch`
+
 ### Has keys
 
 ```js
@@ -420,3 +413,94 @@ assert.notHasKeysMatch(object, {key: value, ...})
 ```
 
 Assert an object does not include one or more key/value pairs.
+
+<a id="sec-utility"></a>
+## Utility methods
+
+This also has several utility methods, so you can create your own assertions and still make them just as clean, neat, and native-looking as the built-in ones. No more of this:
+
+```js
+// AssertionError: Something isn't right
+assert(something.isntRight(), "Something isn't right")
+```
+
+Instead, this could look like this, with beautiful error messages to match:
+
+```js
+// AssertionError: Something isn't right: expected 1, found 2
+if (something.isntRight()) {
+    assert.failFormat(
+        "Something isn't right: expected {expected}, found {actual} " +
+        "with some weird {whatever}",
+        {expected: good, actual: bad, whatever}
+    )
+}
+```
+
+### assert.format(message, opts, formatter?)
+
+```js
+var formattedMessage = assert.format(message, opts={}, prettify=util.inspect)
+```
+
+Create a formatted message from the template `message`, using `opts` to fill it in and `prettify` to pretty-print it to a string.
+
+### assert.failFormat(message?, opts?, prettify?)
+
+```js
+assert.failFormat(message="", opts={}, prettify=util.inspect)
+```
+
+This is sugar for `throw new assert.AssertionError(assert.format(message, opts, prettify), opts.actual, opts.expected)`, but is a little more efficient internally.
+
+### assert.escape(string)
+
+```js
+var escaped = assert.escape(string)
+```
+
+Escape a string so that `assert.format` returns the raw string instead of "pretty-printing" it (e.g. for function names injected into templates).
+
+### assert.matchLoose(a, b)
+
+```js
+var matches = assert.matchLoose(a, b)
+```
+
+Compare two values, either primitives or objects, structurally without regard to their prototypes. Note that this does still do some type checking:
+
+- Primitives and their wrapper objects do not match
+- Symbols are checked for their description, not for identity
+- Dates are matched through their values
+- Arrays don't match plain objects or `arguments`
+- Typed arrays don't match anything other than another array of the same type
+- Objects, maps, and sets have their contents compared in an order-independent fashion
+- It checks typed arrays, Buffers, ArrayBuffers and DataViews
+- Expando properties aren't checked on arrays/maps/sets/etc.
+- It works with the core-js Symbol polyfill if it's the global, and they are checked just like the native primitives
+- It ignores the `stack` property on Errors
+- Objects that are specially handled (e.g. Dates, arrays, `arguments`, Errors) are checked to have the same prototype.
+
+Here's a couple other notes:
+
+- This is somewhat defensive against buggy legacy engines. (e.g. Safari, PhantomJS)
+- This accepts Browserify's `Buffer` polyfill in Node.
+- This intentionally avoids Browserify's global detection beyond just `global`.
+
+### assert.matchStrict(a, b)
+
+```js
+var matches = assert.matchStrict(a, b)
+```
+
+Compare two values, either primitives or objects, structurally, but also verify that their prototypes match (and their children, recursively). The above notes for `assert.matchLoose` also apply, except that symbols are checked for identity instead.
+
+### Why roll my own deep equality algoritm?
+
+There's many reasons:
+
+1. It's not that uncommon just to want to assert that two values match without checking their types.
+2. Most deep equality algorithms are slow, with Node's native `assert` and Lodash's `_.matches` being the primary exceptions.
+3. Most deep equality algorithms aren't ES6-aware, especially when maps and sets get into the picture.
+4. Error stacks are practically useless when matching them. In addition, PhantomJS and IE both generate the stack *when the error is thrown*, not when it was created.
+5. It's often helpful to match symbols, dates, and other value-like types for their value, not their identity. This even carries over to maps and sets: you would expect `_.matches(new Set(1, 2, 3), new Set(3, 2, 1))` to return `true`, especially if you're just asserting what the set has, but most algorithms out there return `false` for this.

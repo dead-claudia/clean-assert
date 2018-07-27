@@ -24,9 +24,11 @@ module.exports = function (config) {
         files: [
             "./test/**/*.js",
         ],
+
         preprocessors: {
             "./test/**/*.js": ["browserify"],
         },
+
         singleRun: !!process.env.TRAVIS,
     })
 }

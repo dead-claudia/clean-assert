@@ -1,42 +1,41 @@
+"use strict"
+
 /* eslint-env mocha */
 
-/* global Symbol, Uint8Array, DataView, Map, Set, Buffer, Int8Array, Int16Array,
-Int32Array, Uint16Array, Uint32Array, Float32Array, Float64Array,
-Uint8ClampedArray */
-
-describe("clean-match", function () { // eslint-disable-line max-statements
-    "use strict"
-
-    var check, cleanMatch
+// eslint-disable-next-line max-statements
+describe("clean-assert (match impl)", function () {
+    var check, assert
 
     /* eslint-disable no-undef, global-require */
 
     if (typeof require === "function") {
         check = global.check
-        cleanMatch = require("./clean-match.js")
+        assert = require("../index")
     } else {
-        cleanMatch = match
+        assert = match
     }
 
     /* eslint-enable no-undef, global-require */
 
+    function checkMethod(method, expected, a, b) {
+        var actual = assert[method](a, b)
+
+        if (actual !== expected) {
+            assert.fail(
+                "(assert." + method + ") Expected {expected} to be {actual}",
+                {expected: expected, actual: actual}
+            )
+        }
+    }
+
     // This is injected from the benchmark, but not from Karma.
     check = check || function (name, a, b, opts) {
-        it(name, function () {
-            var strict = cleanMatch.strict(a, b)
-            var loose = cleanMatch.loose(a, b)
+        it(name + " (loose)", function () {
+            checkMethod("matchLoose", opts.loose, a, b)
+        })
 
-            if (strict !== opts.strict || loose !== opts.loose) {
-                var e = new Error("(match.strict) " +
-                    "expected strict = " + opts.strict +
-                    ", loose = " + opts.loose +
-                    ", found strict = " + strict + ", loose = " + loose)
-
-                e.name = "AssertionError"
-                e.expected = {strict: opts.strict, loose: opts.loose}
-                e.actual = {strict: strict, loose: loose}
-                throw e
-            }
+        it(name + " (strict)", function () {
+            checkMethod("matchStrict", opts.strict, a, b)
         })
     }
 
@@ -156,6 +155,8 @@ describe("clean-match", function () { // eslint-disable-line max-statements
         new Date("Fri Dec 20 2013 16:21:18 GMT-0800 (PST)"),
         {strict: false, loose: false})
 
+    var Buffer = global.Buffer
+
     if (typeof Buffer === "function") {
         check("same Buffers", new Buffer("xyz"), new Buffer("xyz"), {
             strict: true,
@@ -167,6 +168,17 @@ describe("clean-match", function () { // eslint-disable-line max-statements
             loose: false,
         })
     }
+
+    var Int8Array = global.Int8Array
+    var Int16Array = global.Int16Array
+    var Int32Array = global.Int32Array
+    var Uint8Array = global.Uint8Array
+    var Uint8ClampedArray = global.Uint8ClampedArray
+    var Uint16Array = global.Uint16Array
+    var Uint32Array = global.Uint32Array
+    var Float32Array = global.Float32Array
+    var Float64Array = global.Float64Array
+    var DataView = global.DataView
 
     if (typeof Int8Array === "function") {
         check("same Int8Arrays",
@@ -351,6 +363,8 @@ describe("clean-match", function () { // eslint-disable-line max-statements
         loose: false,
     })
 
+    var Symbol = global.Symbol
+
     if (typeof Symbol === "function") {
         var symbol = Symbol("foo")
 
@@ -410,6 +424,9 @@ describe("clean-match", function () { // eslint-disable-line max-statements
     function Id(id) {
         this.id = id
     }
+
+    var Map = global.Map
+    var Set = global.Set
 
     if (typeof Map === "function") {
         check("empty maps", new Map(), new Map(), {

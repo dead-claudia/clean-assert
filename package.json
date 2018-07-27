@@ -9,7 +9,8 @@
     "test:node": "mocha --colors",
     "test:chrome": "karma start --colors --single-run --browsers Chrome",
     "test:firefox": "karma start --colors --single-run --browsers Firefox",
-    "test:phantomjs": "karma start --colors --single-run --browsers PhantomJS"
+    "test:phantomjs": "karma start --colors --single-run --browsers PhantomJS",
+    "bundle": "browserify index.js:assert --standalone"
   },
   "files": [
     "lib",
@@ -33,11 +34,10 @@
     "watchify": "^3.11.0"
   },
   "dependencies": {
-    "clean-match": "^1.0.2",
     "util-inspect": "^0.1.8"
   },
   "browser": {
-    "./lib/inspect.js": "./lib/browser-inspect.js"
+    "./inspect.js": "./browser-inspect.js"
   },
   "repository": "isiahmeadows/clean-assert",
   "bugs": "https://github.com/isiahmeadows/clean-assert/issues",

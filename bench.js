@@ -1,7 +1,7 @@
 /* eslint-env node */
 "use strict"
 
-var match = require("./clean-match.js")
+var assert = require("./index")
 
 // Note: this is a thin wrapper around the tests, injecting a different checker
 // to just reuse them for benchmarking.
@@ -72,11 +72,11 @@ function init(suite) { // eslint-disable-line max-statements
             throw new TypeError("`opts.strict` must be a boolean")
         }
 
-        if (match.strict(a, b) !== opts.strict) {
+        if (assert.matchStrict(a, b) !== opts.strict) {
             throw new Error(name + " failed - please fix strict")
         }
 
-        if (match.loose(a, b) !== opts.loose) {
+        if (assert.matchLoose(a, b) !== opts.loose) {
             throw new Error(name + " failed - please fix match")
         }
 
@@ -84,11 +84,11 @@ function init(suite) { // eslint-disable-line max-statements
             var localA = a
             var localB = b
 
-            match.strict(localA, localB)
-            match.loose(localA, localB)
+            assert.matchStrict(localA, localB)
+            assert.matchLoose(localA, localB)
         })
     }
 
-    require("./test.js") // eslint-disable-line global-require
+    require("./test/match-impl.js") // eslint-disable-line global-require
     suiteInit()
 }

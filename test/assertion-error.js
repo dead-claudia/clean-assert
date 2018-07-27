@@ -14,8 +14,9 @@ describe("clean-assert (assertion error)", function () {
 
     function checkValue(e, prop, expected, own) {
         if (own && !hasOwn.call(e, prop)) {
-            throw new Error("Expected error to have own `" + prop +
-                "` property")
+            throw new Error(
+                "Expected error to have own `" + prop + "` property"
+            )
         }
 
         if (e[prop] !== expected) {
@@ -25,19 +26,35 @@ describe("clean-assert (assertion error)", function () {
         }
     }
 
-    // Otherwise, this won't work on native subclasses.
-    function check(name, message, expected, actual) {
-        it(name, function () {
-            var e = new AssertionError(message, expected, actual)
+    it("correctly sets existing properties", function () {
+        var e = new AssertionError("it failed", 1, 2)
 
-            checkValue(e, "message", message)
-            checkValue(e, "expected", expected, true)
-            checkValue(e, "actual", actual, true)
-        })
-    }
+        checkValue(e, "message", "it failed")
+        checkValue(e, "actual", 1, true)
+        checkValue(e, "expected", 2, true)
+    })
 
-    check("correctly sets existing properties", "message", 1, 2)
-    check("correctly sets missing `actual`", "message", 1, undefined)
-    check("correctly sets missing `expected`", "message", undefined, 2)
-    check("correctly sets missing `message`", "", 1, 2)
+    it("correctly sets missing `actual`", function () {
+        var e = new AssertionError("it failed")
+
+        checkValue(e, "message", "it failed")
+        checkValue(e, "actual", undefined, true)
+        checkValue(e, "expected", undefined, true)
+    })
+
+    it("correctly sets missing `expected`", function () {
+        var e = new AssertionError("it failed", 1)
+
+        checkValue(e, "message", "it failed")
+        checkValue(e, "actual", 1, true)
+        checkValue(e, "expected", undefined, true)
+    })
+
+    it("correctly sets missing `message`", function () {
+        var e = new AssertionError(undefined, 1, 2)
+
+        checkValue(e, "message", "")
+        checkValue(e, "actual", 1, true)
+        checkValue(e, "expected", 2, true)
+    })
 })

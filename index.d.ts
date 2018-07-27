@@ -2,7 +2,9 @@
 
 export type Key = string | number | symbol;
 export type ObjectMap = {[key: string]: any} | {[key: number]: any};
-export function assert(condition: any, message?: string): void;
+export function assert(
+    condition: any, message?: string, actual?: any, expected?: any
+): void;
 
 // In case this isn't already declared
 declare global {
@@ -40,6 +42,16 @@ export class AssertionError extends Error {
 export function format(message: string, args: ObjectMap, prettify?: (value: any) => string): string;
 export function escape(message: string): string;
 
+/**
+ * Perform a prototype-agnostic deep object match.
+ */
+export function matchLoose(a: any, b: any): boolean;
+
+/**
+ * Perform a prototype-aware deep object match.
+ */
+export function matchStrict<T>(a: T, b: T): boolean;
+
 export interface InspectOptions {
     showHidden?: boolean;
     depth?: number;
@@ -59,14 +71,18 @@ export interface InspectStyles {
     regexp: string;
 }
 
+// Note: this delegates to either `util-inspect` or Node's native
+// `util.inspect`, based on the environment.
 export const inspect: {
     (object: any, options?: InspectOptions): string;
+    /** @deprecated in favor of the options object version */
+    (object: any, showHidden?: boolean, depth?: boolean, colors?: boolean): string;
     colors: {[key: string]: [number, number]};
     styles: InspectStyles;
 };
 
-export function fail(message: string): void;
-export function fail(message: string, args: ObjectMap, prettify?: (value: any) => string): void;
+export function fail(message: string, actual?: any, expected?: any): void;
+export function failFormat(message: string, args: ObjectMap, prettify?: (value: any) => string): void;
 
 export function ok(value: any): void;
 export function notOk(value: any): void;

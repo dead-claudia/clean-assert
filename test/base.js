@@ -11,10 +11,11 @@ describe("clean-assert (base)", function () {
             function fail(arg, message) {
                 try {
                     assert.assert(arg, message)
-                    throw new Error("Expected assertion to throw")
                 } catch (e) {
                     assert.equal(e.message, message)
+                    return
                 }
+                throw new Error("Expected assertion to throw")
             }
 
             assert.assert(true)
@@ -43,6 +44,8 @@ describe("clean-assert (base)", function () {
             util.fail("assert", NaN, "{test}")
         })
     })
+
+    // TODO: test `fail()`
 
     util.test("ok", function (ok, fail) {
         return [
