@@ -3,24 +3,26 @@
   "version": "2.0.0",
   "description": "A simple TDD assertion library, initially designed for Thallium",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . --cache",
     "test": "eslint . && npm run test:node",
     "test:all": "eslint . && npm run test:node && npm run test:chrome && npm run test:firefox && npm run test:phantomjs",
-    "test:node": "mocha --colors",
+    "test:node": "mocha --colors --reporter dot",
     "test:chrome": "karma start --colors --single-run --browsers Chrome",
     "test:firefox": "karma start --colors --single-run --browsers Firefox",
-    "test:phantomjs": "karma start --colors --single-run --browsers PhantomJS",
-    "bundle": "browserify index.js:assert --standalone"
+    "test:phantomjs:bundle": "browserify scripts/test-main.js --outfile scripts/test-bundle.js",
+    "test:phantomjs:run": "node_modules/.bin/phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js scripts/test.html dot '{\"useColors\": true}'",
+    "test:phantomjs": "npm run test:phantomjs:bundle && npm run test:phantomjs:run && node scripts/test-cleanup.js"
   },
   "files": [
-    "lib",
-    "index.js",
     "index.d.ts",
+    "index.js",
+    "lib",
     "api.md"
   ],
   "author": "Isiah Meadows",
   "license": "ISC",
   "devDependencies": {
+    "benchmark": "^2.1.4",
     "browserify": "^16.2.2",
     "eslint": "^5.2.0",
     "eslint-config-isiahmeadows": "^0.1.8",
@@ -29,15 +31,16 @@
     "karma-chrome-launcher": "^2.0.0",
     "karma-firefox-launcher": "^1.0.0",
     "karma-mocha": "^1.1.1",
-    "karma-phantomjs-launcher": "^1.0.2",
     "mocha": "^4.0.1",
+    "mocha-phantomjs-core": "^2.1.2",
+    "phantomjs-prebuilt": "^2.1.16",
     "watchify": "^3.11.0"
   },
   "dependencies": {
     "util-inspect": "^0.1.8"
   },
   "browser": {
-    "./inspect.js": "./browser-inspect.js"
+    "./lib/inspect.js": "./lib/browser-inspect.js"
   },
   "repository": "isiahmeadows/clean-assert",
   "bugs": "https://github.com/isiahmeadows/clean-assert/issues",

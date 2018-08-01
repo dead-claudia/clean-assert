@@ -1,12 +1,10 @@
 # Assertions
 
 ```js
-const assert = require("assert")
+const assert = require("clean-assert")
 ```
 
 Within `clean-assert`, there are about 75 different assertions, but they're each variations of the same few concepts. I've separated them all into several groups, so it's a bit easier to parse and look through.
-
-Do note that you don't have to use these, and matter of fact, any assertion library works with this. You could even use Chai if you wanted to. Consider this a useful built-in assertion library in case you prefer batteries included.
 
 - [Basic methods/properties](#sec-basic)
 - [Type checking](#sec-type)
@@ -62,7 +60,7 @@ This is sugar for `assert.assert(false, ...args)`.
 new assert.AssertionError(message="", expected=undefined, actual=undefined)
 ```
 
-The assertion error constructor used in this assertion library. Don't worry, it's only used here, and the rest of Thallium really doesn't care what assertion library you use, if any. It simply checks for the error's `name` to be `"AssertionError"`, nothing else.
+The assertion error constructor used by this library. Normally, you shouldn't care about it, and if you're a test runner, you should be checking `err instanceof Error && err.name === "AssertionError"` instead. But it's here for the sake of completeness.
 
 <a id="sec-type"></a>
 ## Type checking
@@ -212,12 +210,11 @@ assert.atMost(number, upper) // number <= limit
 There are a few methods to deal with exceptions.
 
 ```js
-assert.throws(callback)
 assert.throws(Type, callback)
 assert.throwsMatch(matcher, callback)
 ```
 
-Assert that a callback throws, optionally either `instanceof Type` (for the first form) or matching a `matcher` (for the second form). In the case of the second, the `matcher` can be any of these:
+Assert that a callback throws, either `instanceof Type` (for the first form) or matching a `matcher` (for the second form). In the case of the second, the `matcher` can be any of these:
 
 - A string, which the error's message is checked to equal
 - A regular expression, which the error's message is checked to match
@@ -265,14 +262,14 @@ assert.notHasKeyLoose(object, key, value)
 
 Assert whether an object has an own or inherited key either strictly (`===`/`!==`) or loosely (`==`/`!=`) equal to a value.
 
-### Map keys
+### Map/Set keys
 
 ```js
 assert.has(object, key)
 assert.notHas(object, key)
 ```
 
-Assert whether a [map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) has a key.
+Assert whether a [map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) or [set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) has a key. Note that these work with any object with a `has` method, so you can pass a normal map, a weak set, or even an [ImmutableJS `List`](https://facebook.github.io/immutable-js/docs/#/List).
 
 ```js
 assert.has(object, key, value)
@@ -281,14 +278,14 @@ assert.notHas(object, key, value)
 assert.notHasLoose(object, key, value)
 ```
 
-Assert whether a [map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) has a key either strictly (`===`/`!==`) or loosely (`==`/`!=`) equal to a value.
+Assert whether a [map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) has a key either strictly (`===`/`!==`) or loosely (`==`/`!=`) equal to a value. Note that these work with any object with a `has` and `get` method, so you can pass a normal map, a weak map, or even an [ImmutableJS `List`](https://facebook.github.io/immutable-js/docs/#/List).
 
 <a id="sec-includes"></a>
 ## Includes in iterable
 
 There's also some larger methods to test many possibilities at once.
 
-It may seem like there's a lot of methods here, and that's pretty true, but it's simpler than it looks. Here's a quick overview of how they're sorted:
+It may seem like there's a lot of methods here, and that's pretty true, but it's simpler than it looks. Here's a quick overview of how they're organized:
 
               |     shallow      |     strict deep      |   structural deep
 --------------|------------------|----------------------|-----------------------
@@ -354,7 +351,7 @@ Assert an iterable does not include one or more values.
 
 Just like testing for multiple values in iterables, you can also test for multiple key-value pairs in objects. These are checked to be own properties, not inherited, and it can be considered a more flexible shorthand for multiple `assert.hasOwn` calls.
 
-It may seem like there's a lot of methods here, and that's pretty true, but it's simpler than it looks. Here's a quick overview of how they're sorted:
+It may seem like there's a lot of methods here, and that's pretty true, but it's simpler than it looks. Here's a quick overview of how they're organized:
 
               |     shallow     |    strict deep      |   structural deep
 --------------|-----------------|---------------------|----------------------
@@ -467,7 +464,7 @@ Escape a string so that `assert.format` returns the raw string instead of "prett
 var matches = assert.matchLoose(a, b)
 ```
 
-Compare two values, either primitives or objects, structurally without regard to their prototypes. Note that this does still do some type checking:
+Compare two values, either primitives or objects, structurally and without regard to their prototypes. Note that this does still do some type checking:
 
 - Primitives and their wrapper objects do not match
 - Symbols are checked for their description, not for identity
@@ -495,7 +492,7 @@ var matches = assert.matchStrict(a, b)
 
 Compare two values, either primitives or objects, structurally, but also verify that their prototypes match (and their children, recursively). The above notes for `assert.matchLoose` also apply, except that symbols are checked for identity instead.
 
-### Why roll my own deep equality algoritm?
+### Why roll my own deep equality algorithm?
 
 There's many reasons:
 

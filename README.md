@@ -2,9 +2,9 @@
 
 # clean-assert
 
-A simple TDD assertion library, initially designed for [Thallium](https://www.npmjs.com/package/thallium), but factored out as a separate module for use elsewhere. It's also extensible, with even its core formatting methods exposed, so you can write your own assertions that look just like this one, without any hassle and without declaring a direct dependency on this (that package is much more stable).
+A simple TDD assertion library, initially designed for [Thallium](https://www.npmjs.com/package/thallium), but factored out as a separate module for use elsewhere. It's also extensible, with even its core formatting methods exposed, so you can write your own assertions that are just as pretty as the ones you'll see here.
 
-**Note:** If you're concerned about the very minimal Git/version history, this library *is* actively maintained, and I personally use this with production projects; it's just very stable and what you might consider mostly done. Probably one of those 0.00001% of projects that are generally bug-free.
+**Note:** If you're concerned about the very minimal Git/version history, this library *is* actively maintained, and I personally use this with all new production projects I control; it's just very stable and what you might consider mostly done. Probably one of those 0.00001% of projects that are generally bug-free.
 
 ## Installation
 
@@ -16,7 +16,7 @@ npm install --save clean-assert
 
 ## API
 
-See [here](https://github.com/isiahmeadows/clean-assert/blob/master/api.md).
+See [here](https://github.com/isiahmeadows/clean-assert/blob/master/docs/api.md).
 
 ## Examples
 

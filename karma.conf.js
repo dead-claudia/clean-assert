@@ -6,18 +6,13 @@ module.exports = function (config) {
         basePath: __dirname,
         restartOnFileChange: true,
 
-        // browsers: ["Chrome", "Firefox", "PhantomJS"]
+        // browsers: ["Chrome", "Firefox"]
         frameworks: ["browserify", "mocha"],
 
         customLaunchers: {
             ChromeTravisCI: {
                 base: "Chrome",
                 flags: ["--no-sandbox"],
-            },
-
-            PhantomJSDebug: {
-                base: "PhantomJS",
-                debug: true,
             },
         },
 

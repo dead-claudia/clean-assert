@@ -2,66 +2,60 @@
 
 /**
  * Core TDD-style assertions. These are done by a composition of DSLs, since
- * there is *so* much repetition. Also, this is split into several namespaces to
- * keep the file size manageable.
+ * there is *so* much repetition.
  */
 
-var match = require("./match")
-var inspect = require("./inspect")
+var match = require("./lib/match")
+var comparison = require("./lib/comparison")
+var inspect = require("./lib/inspect")
+
+exports.inspect = inspect
+
+exports.matchLoose = match.loose
+exports.matchStrict = match.strict
 
 var hasOwn = Object.prototype.hasOwnProperty
-
 var AssertionError
 
-// PhantomJS, IE, and possibly Edge don't set the stack trace until the error is
-// thrown. Note that this prefers an existing stack first, since non-native
-// errors likely already contain this.
-function getStack(e) {
-    var stack = e.stack
-
-    if (!(e instanceof Error) || stack != null) return stack
-
-    try {
-        throw e
-    } catch (e) {
-        return e.stack
-    }
-}
-
 try {
-    AssertionError = new Function([ // eslint-disable-line no-new-func
-        "'use strict';",
-        "class AssertionError extends Error {",
-        "    constructor(message, actual, expected) {",
-        "        super(message)",
-        "        this.actual = actual",
-        "        this.expected = expected",
-        "    }",
-        "",
-        "    get name() {",
-        "        return 'AssertionError'",
-        "    }",
-        "}",
+    AssertionError = new Function( // eslint-disable-line no-new-func
+        "class AssertionError extends Error{" +
+            "constructor(m,a,e){super(m);this.actual=a;this.expected=e}" +
+            "get name(){return'AssertionError'}" +
+        "}" +
         // check native subclassing support
-        "new AssertionError('message', 1, 2)",
-        "return AssertionError",
-    ].join("\n"))()
+        "if('a'!=new AssertionError('a',1,2).message)throw'';" +
+        "return AssertionError"
+    )()
 } catch (e) {
+    // Take advantage of V8's always-exposed stack trace API.
     AssertionError = typeof Error.captureStackTrace === "function"
         ? function AssertionError(message, actual, expected) {
             this.message = message || ""
             this.expected = expected
             this.actual = actual
-            Error.captureStackTrace(this, this.constructor)
+            Error.captureStackTrace(this, AssertionError)
         }
         : function AssertionError(message, actual, expected) {
-            this.message = message || ""
-            this.expected = expected
-            this.actual = actual
             var e = new Error(message)
 
             e.name = "AssertionError"
-            this.stack = getStack(e)
+
+            this.message = e.message
+            this.expected = expected
+            this.actual = actual
+            this.stack = e.stack
+
+            // PhantomJS, IE, and possibly Edge don't set the stack trace until
+            // the error is thrown. Note that this prefers an existing stack
+            // first, since most everyone else already contains this.
+            if (this.stack == null) {
+                try {
+                    throw e
+                } catch (e) {
+                    this.stack = e.stack
+                }
+            }
         }
 
     AssertionError.prototype = Object.create(Error.prototype)
@@ -80,32 +74,14 @@ try {
         value: "AssertionError",
     })
 }
-
 exports.AssertionError = AssertionError
 
-/* eslint-disable no-self-compare */
-// For better NaN handling
-function strictIs(a, b) {
-    return a === b || a !== a && b !== b
-}
-
-function looseIs(a, b) {
-    return a == b || a !== a && b !== b // eslint-disable-line eqeqeq
-}
-
-/* eslint-enable no-self-compare */
-
-var templateRegexp = /(.?)\{(.+?)\}/g
-
-exports.escape = escape
-function escape(string) {
+exports.escape = function (string) {
     if (typeof string !== "string") {
         throw new TypeError("`string` must be a string")
     }
 
-    return string.replace(templateRegexp, function (m, pre) {
-        return pre + "\\" + m.slice(1)
-    })
+    return string.replace(/\{.+?\}/g, function (m) { return "\\" + m })
 }
 
 // This formats the assertion error messages.
@@ -121,18 +97,14 @@ function format(message, opts, prettify) {
         throw new TypeError("`opts` must be an object")
     }
 
-    if (typeof prettify !== "function") {
-        throw new TypeError("`prettify` must be a function if passed")
-    }
+    checkCallable(prettify, "prettify")
 
-    return message.replace(templateRegexp, function (m, pre, prop) {
-        if (pre === "\\") {
-            return m.slice(1)
-        } else if (hasOwn.call(opts, prop)) {
-            return pre + prettify(opts[prop], {depth: 5})
-        } else {
-            return pre + m
-        }
+    return message.replace(/\\?\{.+?\}/g, function (m) {
+        if (m[0] === "\\") return m.slice(1)
+        var prop = m.slice(1, -1)
+
+        if (!hasOwn.call(opts, prop)) return m
+        return prettify(opts[prop], {depth: 5})
     })
 }
 
@@ -141,9 +113,7 @@ exports.assert = assert
 function assert(test, message, actual, expected) {
     if (!test) {
         if (arguments.length > 2) {
-            message = format(message, {
-                actual: actual, expected: expected,
-            })
+            message = format(message, {actual: actual, expected: expected})
         }
         throw new AssertionError(message, actual, expected)
     }
@@ -166,6 +136,31 @@ function failFormat(message, opts, prettify) {
     )
 }
 
+function checkNumber(value, name) {
+    if (typeof value !== "number") {
+        throw new TypeError("`" + name + "` must be a number")
+    }
+}
+
+function checkCallable(value, name) {
+    if (typeof value !== "function") {
+        throw new TypeError("`" + name + "` must be a function")
+    }
+}
+
+function isCollection(value) {
+    return value != null && (
+        typeof value[comparison.symbolIterator] === "function" ||
+        typeof value.length === "number"
+    )
+}
+
+function checkCollection(value, name) {
+    if (!isCollection(value)) {
+        throw new TypeError("`" + name + "` must be an iterable or array-like")
+    }
+}
+
 function isReferenceType(object) {
     return object != null && (
         typeof object === "function" ||
@@ -173,216 +168,326 @@ function isReferenceType(object) {
     )
 }
 
-var symbolIterator = "@@iterator"
-
-/* eslint-disable no-undef */
-if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    symbolIterator = Symbol.iterator
-}
-/* eslint-enable no-undef */
-
-function isIterable(object) {
-    return typeof object[symbolIterator] === "function"
-}
-
-var from = Array.from || function (iter) {
-    var array = []
-    var iterator = iter[symbolIterator]()
-    var step
-
-    while (!(step = iterator.next()).done) {
-        array.push(step.value)
-    }
-
-    return array
-}
-
-function castIfIterable(array) {
-    if (Array.isArray(array)) return array
-    if (!isIterable(array)) return array
-    return from(array)
-}
-
-function castIterableChecked(array) {
-    if (Array.isArray(array)) return array
-    if (!isIterable(array)) return undefined
-    return from(array)
-}
-
-function throwsMatchTest(matcher, e) {
-    if (typeof matcher === "string") return e.message === matcher
-    if (typeof matcher === "function") return !!matcher(e)
-    if (matcher instanceof RegExp) return !!matcher.test(e.message)
-
-    var keys = Object.keys(matcher)
-
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i]
-
-        if (!(key in e) || !strictIs(matcher[key], e[key])) return false
-    }
-
-    return true
-}
-
-function isPlainObject(object) {
-    return object == null || Object.getPrototypeOf(object) === Object.prototype
-}
-
-function checkNumber(value, name) {
-    if (typeof value !== "number") {
-        throw new TypeError("`" + name + "` must be a number")
+function checkReferenceType(value, name) {
+    if (!isReferenceType(value)) {
+        throw new TypeError("`" + name + "` must be an iterable or array-like")
     }
 }
 
-exports.inspect = inspect
-exports.matchLoose = match.loose
-exports.matchStrict = match.strict
+/* eslint-disable max-len */
+var hasMessages = [
+    "Expected {object} to have own key {key} equal to {expected}, but found {actual}",
+    "Expected {object} to have own key {expected}",
+    "Expected {object} to not have own key {key} equal to {actual}",
+    "Expected {object} to not have own key {expected}",
+    "Expected {object} to have key {key} equal to {expected}, but found {actual}",
+    "Expected {object} to have key {expected}",
+    "Expected {object} to not have key {key} equal to {actual}",
+    "Expected {object} to not have key {expected}",
+]
+/* eslint-enable max-len */
+
+function makeHas(test, get, is, index) {
+    return function (object, key, value) {
+        var invert = (index & 2) !== 0
+
+        if ((test(object, key) && is(get(object, key), value)) === invert) {
+            failFormat(hasMessages[index], {
+                actual: object[key], expected: value,
+                object: object, key: key,
+            })
+        }
+    }
+}
+
+function makeHasOverload(test, get, is, index) {
+    return function (object, key, value) {
+        var invert = (index & 2) !== 0
+
+        if (arguments.length >= 3) {
+            if ((test(object, key) && is(get(object, key), value)) === invert) {
+                failFormat(hasMessages[index], {
+                    actual: object[key], expected: value,
+                    object: object, key: key,
+                })
+            }
+        } else if (test(object, key) === invert) {
+            failFormat(hasMessages[index + 1], {
+                actual: object[key], expected: value,
+                object: object, key: key,
+            })
+        }
+    }
+}
+
+function testHasOwn(object, key) { return hasOwn.call(object, key) }
+function testHasIn(object, key) { return key in object }
+function testHasKey(object, key) { return object.has(key) }
+function getProperty(object, key) { return object[key] }
+function getMethod(object, key) { return object.get(key) }
+
+var includesTemplates = [
+    "Expected {coll} to include {expected}",
+    "Expected {coll} to not include {expected}",
+]
+
+function makeIncludes(type, mask) {
+    return function (coll, expected) {
+        checkCollection(coll, "coll")
+
+        if (comparison.simpleIncludes(
+            comparison.arrayFrom(coll), expected, type
+        ) === ((mask & 1) !== 0)) {
+            failFormat(
+                includesTemplates[mask >>> 1],
+                {coll: coll, expected: expected}
+            )
+        }
+    }
+}
+
+var equalsAnyTemplates = [
+    "Expected {actual} to equal one of {coll}",
+    "Expected {actual} to not equal one of {coll}",
+]
+
+function makeEqualsAny(type, index) {
+    return function (actual, coll) {
+        checkCollection(coll, "coll")
+
+        if (comparison.simpleIncludes(
+            comparison.arrayFrom(coll), actual, type
+        ) === (index !== 0)) {
+            failFormat(
+                equalsAnyTemplates[index],
+                {actual: actual, coll: coll}
+            )
+        }
+    }
+}
+
+var includesMultiTemplates = [
+    "Expected {coll} to include all values in {expected}",
+    "Expected {coll} to exclude all values in {expected}",
+    "Expected {coll} to include any value in {expected}",
+    "Expected {coll} to exclude any value in {expected}",
+]
+
+function makeIncludesMulti(type, mask) {
+    return function (coll, expected) {
+        checkCollection(coll, "coll")
+        checkCollection(expected, "expected")
+
+        if (comparison.includesDeepCheck(
+            comparison.arrayFrom(coll),
+            comparison.arrayFrom(expected),
+            type, (mask & 1) !== 0
+        ) === ((mask & 2) !== 0)) {
+            failFormat(
+                includesMultiTemplates[mask],
+                {coll: coll, expected: expected}
+            )
+        }
+    }
+}
+
+var hasKeysMessages = [
+    "Expected {object} to have all keys in {expected}, but found {actual}",
+    "Expected {object} to have any key in {expected}, but found {actual}",
+    "Expected {object} to lack all keys in {expected}, but found {actual}",
+    "Expected {object} to lack any key in {expected}, but found {actual}",
+]
+
+function makeHasKeys(mask, test, get, is) {
+    return function (object, expected) {
+        checkReferenceType(object, "object")
+
+        if (!isReferenceType(expected) && typeof expected !== "string") {
+            throw new TypeError(
+                "`expected` must be an object, iterable, or array-like"
+            )
+        }
+
+        var checkKeysOnly = isCollection(expected)
+
+        // exclusive or to invert the result if `invert` is true
+        // boolean equality is equivalent to exclusive or
+        if ((
+            checkKeysOnly
+                ? comparison.hasKeysTest(
+                    object, comparison.arrayFrom(expected),
+                    test, (mask & 1) !== 0
+                )
+                : object === expected || comparison.hasKeysCheck(
+                    object, expected,
+                    test, get, is, (mask & 1) !== 0
+                )
+        ) === ((mask & 2) !== 0)) {
+            var actual
+
+            if (checkKeysOnly) {
+                actual = Object.keys(expected)
+                var count = 0
+
+                for (var i = 0; i < actual.length; i++) {
+                    if (test(object, actual[i])) actual[count++] = actual[i]
+                }
+
+                actual.length = count
+            } else {
+                actual = Object.create(null)
+
+                for (var key in expected) {
+                    if (hasOwn.call(expected, key) && test(object, key)) {
+                        actual[key] = get(object, key)
+                    }
+                }
+            }
+
+            failFormat(
+                hasKeysMessages[mask],
+                {object: object, actual: actual, expected: expected}
+            )
+        }
+    }
+}
+
+/**
+ * Pretty much all the assertion methods fit within a single 2x3x14 matrix:
+ *
+ * Top level: (truth, falsehood)
+ *
+ * - Is true (like `assert.ok`)
+ * - Not true (like `assert.notOk`)
+ *
+ * Second level: (match type)
+ *
+ * - Structural via `matchLoose` (like `assert.includes`)
+ * - Exact via [SameValueZero][1] (like `assert.exactlyIncludes`)
+ * - Deep via `matchStrict` (like `assert.deeplyIncludes`)
+ *
+ * Third level: (match location)
+ *
+ * - Equality (like `assert.equals`)
+ * - Has own key (like `assert.hasOwn(object, k)`)
+ * - Has accessible key (like `assert.hasIn(object, k)`)
+ * - Has map/set key (like `assert.hasKey(object, k)`)
+ * - Has own key set to a value (like `assert.hasOwn(object, k, v)`)
+ * - Has accessible key set to a value (like `assert.hasIn(object, k, v)`)
+ * - Has map/set key (like `assert.hasKey(object, k, v)`)
+ * - Includes single value (like `assert.includes`)
+ * - Includes all values (like `assert.includesAll`)
+ * - Includes any value (like `assert.includesAny`)
+ * - Has all own keys (like `assert.hasAllOwn(object, [...keys])`)
+ * - Has any own key (like `assert.hasAnyOwn(object, [...keys])`)
+ * - Has all own pairs (like `assert.hasAllOwn(object, {...pairs})`)
+ * - Has any own pair (like `assert.hasAnyOwn(object, {...pairs})`)
+ * - Has all accessible keys (like `assert.hasAllIn(object, [...keys])`)
+ * - Has any accessible key (like `assert.hasAnyIn(object, [...keys])`)
+ * - Has all accessible pairs (like `assert.hasAllIn(object, {...pairs})`)
+ * - Has any accessible pair (like `assert.hasAnyIn(object, {...pairs})`)
+ * - Has all map keys (like `assert.hasAllKeys(object, [...keys])`)
+ * - Has any map key (like `assert.hasAnyKey(object, [...keys])`)
+ * - Has all map pairs (like `assert.hasAllKeys(object, {...pairs})`)
+ * - Has any map pair (like `assert.hasAnyKey(object, {...pairs})`)
+ *
+ * Not all assertion methods have variants in each of these:
+ *
+ * - `assert` has no inverse.
+ * - `fail` and `failFormat` just fail unconditionally.
+ * - `throws` and `throwsMatching` have no inverse, since it usually makes more
+ *   sense to just let the exception propagate instead. You get to keep the
+ *   stack trace this way, which is all around just generally more helpful for
+ *   debugging.
+ * - Most methods have inverses named after single-word or two-word antonyms:
+ *   - "includes" becomes "excludes"
+ *   - "has" becomes "lacks"
+ *   - `atLeast` becomes `below`
+ *   - `atMost` becomes `above`
+ * - Several methods only have one match type/location: `atLeast`/`below`,
+ *   `atMost`/`above`, `ok`/`notOk`, `is`/`not`, `maybeIs`/`maybeNot`,
+ *   `between`/`notBetween`, and `closeTo`/`notCloseTo`.
+ *
+ * In total, this is a little over 100 separate, dedicated assertions
+ *
+ * [1]: http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero
+ */
 
 exports.ok = function (x) {
-    assert(x, "Expected {actual} to be truthy", x)
+    assert(x != null, "Expected {actual} to not be null or undefined", x)
 }
 
 exports.notOk = function (x) {
-    assert(!x, "Expected {actual} to be falsy", x)
-}
-
-exports.isBoolean = function (x) {
-    assert(typeof x === "boolean", "Expected {actual} to be a boolean", x)
-}
-
-exports.notBoolean = function (x) {
-    assert(typeof x !== "boolean", "Expected {actual} to not be a boolean", x)
-}
-
-exports.isFunction = function (x) {
-    assert(typeof x === "function", "Expected {actual} to be a function", x)
-}
-
-exports.notFunction = function (x) {
-    assert(typeof x !== "function", "Expected {actual} to not be a function", x)
-}
-
-exports.isNumber = function (x) {
-    assert(typeof x === "number", "Expected {actual} to not be a number", x)
-}
-
-exports.notNumber = function (x) {
-    assert(typeof x !== "number", "Expected {actual} to be a number", x)
-}
-
-exports.isObject = function (x) {
-    assert(
-        typeof x === "object" && x != null,
-        "Expected {actual} to not be an object", x
-    )
-}
-
-exports.notObject = function (x) {
-    assert(
-        typeof x !== "object" || x == null,
-        "Expected {actual} to be an object", x
-    )
-}
-
-exports.isString = function (x) {
-    assert(typeof x === "string", "Expected {actual} to not be a string", x)
-}
-
-exports.notString = function (x) {
-    assert(typeof x !== "string", "Expected {actual} to be a string", x)
-}
-
-exports.isSymbol = function (x) {
-    assert(typeof x === "symbol", "Expected {actual} to not be a symbol", x)
-}
-
-exports.notSymbol = function (x) {
-    assert(typeof x !== "symbol", "Expected {actual} to be a symbol", x)
-}
-
-exports.exists = function (x) {
-    assert(x != null, "Expected {actual} to exist", x)
-}
-
-exports.notExists = function (x) {
-    assert(x == null, "Expected {actual} to not exist", x)
-}
-
-exports.isArray = function (x) {
-    assert(Array.isArray(x), "Expected {actual} to not be an array", x)
-}
-
-exports.notArray = function (x) {
-    assert(!Array.isArray(x), "Expected {actual} to be an array", x)
-}
-
-exports.isIterable = function (x) {
-    assert(
-        isReferenceType(x) && isIterable(x),
-        "Expected {actual} to not be an iterable", x
-    )
-}
-
-exports.notIterable = function (x) {
-    assert(
-        !isReferenceType(x) || !isIterable(x),
-        "Expected {actual} to be an iterable", x
-    )
+    assert(x == null, "Expected {actual} to be null or undefined", x)
 }
 
 exports.is = function (Type, object) {
-    if (typeof Type !== "function") {
-        throw new TypeError("`Type` must be a function")
-    }
-
-    if (!(object instanceof Type)) {
-        failFormat(
-            "Expected {object} to be an instance of {expected}",
-            {actual: object.constructor, expected: Type, object: object}
-        )
+    if (object == null || !comparison.isType(Type, object)) {
+        if (typeof Type === "string") {
+            fail(
+                "Expected {actual} to be " +
+                (/^[aeiou]/.test(Type) ? "a " : "an ") + Type,
+                object, undefined
+            )
+        } else {
+            failFormat(
+                "Expected {object} to be an instance of {expected}",
+                {actual: object.constructor, expected: Type, object: object}
+            )
+        }
     }
 }
 
 exports.not = function (Type, object) {
-    if (typeof Type !== "function") {
-        throw new TypeError("`Type` must be a function")
+    if (object != null && comparison.isType(Type, object)) {
+        if (typeof Type === "string") {
+            fail(
+                "Expected {actual} to not be " +
+                (/^[aeiou]/.test(Type) ? "a " : "an ") + Type,
+                object, undefined
+            )
+        } else {
+            failFormat(
+                "Expected {object} to not be an instance of {expected}",
+                {actual: object.constructor, expected: Type, object: object}
+            )
+        }
     }
+}
 
-    if (object instanceof Type) {
-        failFormat(
-            "Expected {object} to not be an instance of {expected}",
-            {actual: object.constructor, expected: Type, object: object}
-        )
+exports.possibly = function (Type, object) {
+    if (object != null && !comparison.isType(Type, object)) {
+        if (typeof Type === "string") {
+            fail(
+                "Expected {actual} to possibly be " +
+                (/^[aeiou]/.test(Type) ? "a " : "an ") + Type,
+                object, undefined
+            )
+        } else {
+            failFormat(
+                "Expected {object} to possibly be an instance of {expected}",
+                {actual: object.constructor, expected: Type, object: object}
+            )
+        }
     }
 }
 
-exports.equal = function (actual, expected) {
-    assert(strictIs(actual, expected),
-        "Expected {actual} to equal {expected}",
-        actual, expected
-    )
-}
-
-exports.notEqual = function (actual, expected) {
-    assert(!strictIs(actual, expected),
-        "Expected {actual} to not equal {expected}",
-        actual, expected
-    )
-}
-
-exports.equalLoose = function (actual, expected) {
-    assert(looseIs(actual, expected),
-        "Expected {actual} to loosely equal {expected}",
-        actual, expected
-    )
-}
-
-exports.notEqualLoose = function (actual, expected) {
-    assert(!looseIs(actual, expected),
-        "Expected {actual} to not loosely equal {expected}",
-        actual, expected
-    )
+exports.notPossibly = function (Type, object) {
+    if (object == null || comparison.isType(Type, object)) {
+        if (typeof Type === "string") {
+            fail(
+                "Expected {actual} to not possibly be " +
+                (/^[aeiou]/.test(Type) ? "a " : "an ") + Type,
+                object, undefined
+            )
+        } else {
+            failFormat(
+                "Expected {object} to not possibly be " +
+                "an instance of {expected}",
+                {actual: object.constructor, expected: Type, object: object}
+            )
+        }
+    }
 }
 
 exports.atLeast = function (actual, expected) {
@@ -430,9 +535,11 @@ exports.between = function (actual, lower, upper) {
     checkNumber(lower, "lower")
     checkNumber(upper, "upper")
 
-    // The negation is to address NaNs as well, without writing a ton of special
-    // case boilerplate
-    if (!(actual >= lower && actual <= upper)) {
+    if (
+        // eslint-disable-next-line no-self-compare
+        actual !== actual || lower !== lower || upper !== upper ||
+        actual < lower || actual > upper
+    ) {
         failFormat(
             "Expected {actual} to be between {lower} and {upper}",
             {actual: actual, lower: lower, upper: upper}
@@ -440,60 +547,24 @@ exports.between = function (actual, lower, upper) {
     }
 }
 
-exports.deepEqual = function (actual, expected) {
-    assert(match.strict(actual, expected),
-        "Expected {actual} to deeply equal {expected}",
-        actual, expected
-    )
-}
+// Note: this is high enough to cover roundoff and other highly inaccurate
+// computations that frequently end up in application code (where precision
+// isn't always important), but not so high it fails to address truly non-equal
+// values. It was chosen through a bit of trial and error.
+var defaultTolerance = 1e-8
 
-exports.notDeepEqual = function (actual, expected) {
-    assert(!match.strict(actual, expected),
-        "Expected {actual} to not deeply equal {expected}",
-        actual, expected
-    )
-}
-
-exports.match = function (actual, expected) {
-    assert(match.loose(actual, expected),
-        "Expected {actual} to match {expected}",
-        actual, expected
-    )
-}
-
-exports.notMatch = function (actual, expected) {
-    assert(!match.loose(actual, expected),
-        "Expected {actual} to not match {expected}",
-        actual, expected
-    )
-}
-
-// Uses division to allow for a more robust comparison of floats. Also, this
-// handles near-zero comparisons correctly, as well as a zero tolerance (i.e.
-// exact comparison).
-function closeTo(actual, expected, tolerance) {
-    if (tolerance === Infinity || actual === expected) return true
-    if (tolerance === 0) return false
-    if (actual === 0) return Math.abs(expected) < tolerance
-    if (expected === 0) return Math.abs(actual) < tolerance
-    return Math.abs(expected / actual - 1) < tolerance
-}
-
-// Note: these two always _fail when dealing with NaNs.
+// Note: these two always fail when dealing with NaNs.
 exports.closeTo = function (actual, expected, tolerance) {
     checkNumber(actual, "actual")
     checkNumber(expected, "expected")
-    if (tolerance == null) tolerance = 1e-10
+    if (tolerance == null) tolerance = defaultTolerance
     checkNumber(tolerance, "tolerance")
-
-    if (tolerance < 0) {
-        throw new RangeError("`tolerance` must be non-negative")
-    }
+    if (tolerance < 0) throw new RangeError("`tolerance` must be non-negative")
 
     assert(
         // eslint-disable-next-line no-self-compare
-        actual === actual && expected === expected &&
-        closeTo(actual, expected, tolerance),
+        actual === actual && expected === expected && tolerance === tolerance &&
+        comparison.closeTo(actual, expected, tolerance),
         "Expected {actual} to be close to {expected}",
         actual, expected
     )
@@ -502,40 +573,103 @@ exports.closeTo = function (actual, expected, tolerance) {
 exports.notCloseTo = function (actual, expected, tolerance) {
     checkNumber(actual, "actual")
     checkNumber(expected, "expected")
-    if (tolerance == null) tolerance = 1e-10
+    if (tolerance == null) tolerance = defaultTolerance
     checkNumber(tolerance, "tolerance")
-
-    if (tolerance < 0) {
-        throw new RangeError("`tolerance` must be non-negative")
-    }
+    if (tolerance < 0) throw new RangeError("`tolerance` must be non-negative")
 
     assert(
         // eslint-disable-next-line no-self-compare
-        actual === actual && expected === expected &&
-        !closeTo(actual, expected, tolerance),
+        actual === actual && expected === expected && tolerance === tolerance &&
+        !comparison.closeTo(actual, expected, tolerance),
         "Expected {actual} to not be close to {expected}",
         actual, expected
     )
 }
 
+exports.notBetween = function (actual, lower, upper) {
+    checkNumber(actual, "actual")
+    checkNumber(lower, "lower")
+    checkNumber(upper, "upper")
+
+    if (
+        // eslint-disable-next-line no-self-compare
+        actual !== actual || lower !== lower || upper !== upper ||
+        actual >= lower && actual <= upper
+    ) {
+        failFormat(
+            "Expected {actual} to not be between {lower} and {upper}",
+            {actual: actual, lower: lower, upper: upper}
+        )
+    }
+}
+
+exports.equal = function (actual, expected) {
+    assert(match.loose(actual, expected),
+        "Expected {actual} to equal {expected}",
+        actual, expected
+    )
+}
+
+exports.notEqual = function (actual, expected) {
+    assert(!match.loose(actual, expected),
+        "Expected {actual} to not equal {expected}",
+        actual, expected
+    )
+}
+
+exports.equalsAny = makeEqualsAny(match.loose, 0)
+exports.equalsNone = makeEqualsAny(match.loose, 1)
+
+exports.hasOwn = makeHasOverload(testHasOwn, getProperty, match.loose, 0x0)
+exports.lacksOwn = makeHasOverload(testHasOwn, getProperty, match.loose, 0x2)
+
+exports.hasIn = makeHasOverload(testHasIn, getProperty, match.loose, 0x4)
+exports.lacksIn = makeHasOverload(testHasIn, getProperty, match.loose, 0x6)
+
+exports.hasKey = makeHasOverload(testHasKey, getMethod, match.loose, 0x0)
+exports.lacksKey = makeHasOverload(testHasKey, getMethod, match.loose, 0x6)
+
+exports.includes = makeIncludes(match.loose, 0x0)
+exports.excludes = makeIncludes(match.loose, 0x1)
+
+exports.includesAll = makeIncludesMulti(match.loose, 0x0)
+exports.excludesAll = makeIncludesMulti(match.loose, 0x2)
+
+exports.includesAny = makeIncludesMulti(match.loose, 0x1)
+exports.excludesAny = makeIncludesMulti(match.loose, 0x3)
+
+exports.hasAllOwn = makeHasKeys(0x0, testHasOwn, getProperty, match.loose)
+exports.lacksAllOwn = makeHasKeys(0x2, testHasOwn, getProperty, match.loose)
+
+exports.hasAnyOwn = makeHasKeys(0x1, testHasOwn, getProperty, match.loose)
+exports.lacksAnyOwn = makeHasKeys(0x3, testHasOwn, getProperty, match.loose)
+
+exports.hasAllIn = makeHasKeys(0x0, testHasIn, getProperty, match.loose)
+exports.lacksAllIn = makeHasKeys(0x2, testHasIn, getProperty, match.loose)
+
+exports.hasAnyIn = makeHasKeys(0x1, testHasIn, getProperty, match.loose)
+exports.lacksAnyIn = makeHasKeys(0x3, testHasIn, getProperty, match.loose)
+
+exports.hasAllKeys = makeHasKeys(0x0, testHasKey, getMethod, match.loose)
+exports.lacksAllKeys = makeHasKeys(0x2, testHasKey, getMethod, match.loose)
+
+exports.hasAnyKey = makeHasKeys(0x1, testHasKey, getMethod, match.loose)
+exports.lacksAnyKey = makeHasKeys(0x3, testHasKey, getMethod, match.loose)
+
 exports.throws = function (Type, callback) {
-    if (callback == null) {
-        callback = Type
-        Type = null
+    if (!isReferenceType(Type) && typeof Type !== "string") {
+        throw new TypeError(
+            "`Type` must be a string, function, or object with " +
+            "`Symbol.hasInstance`"
+        )
     }
 
-    if (Type != null && typeof Type !== "function") {
-        throw new TypeError("`Type` must be a function if passed")
-    }
-
-    if (typeof callback !== "function") {
-        throw new TypeError("`callback` must be a function")
-    }
+    checkCallable(callback, "callback")
 
     try {
         callback() // eslint-disable-line callback-return
     } catch (e) {
-        assert(Type == null || e instanceof Type,
+        assert(comparison.isType(Type, e),
             "Expected callback to throw an instance of {expected}, " +
             "but found {actual}",
             e, Type
@@ -546,354 +680,174 @@ exports.throws = function (Type, callback) {
     throw new AssertionError("Expected callback to throw")
 }
 
-exports.throwsMatch = function (matcher, callback) {
-    if (typeof matcher !== "string" &&
-            typeof matcher !== "function" &&
-            !(matcher instanceof RegExp) &&
-            !isPlainObject(matcher)) {
+exports.throwsMatching = function (matcher, callback) {
+    var type
+
+    if (typeof matcher === "string") {
+        type = 0
+    } else if (typeof matcher === "function") {
+        type = 1
+    } else if (matcher instanceof RegExp) {
+        type = 2
+    } else if (
+        matcher != null &&
+        Object.getPrototypeOf(matcher) === Object.prototype
+    ) {
+        type = 3
+    } else {
         throw new TypeError(
-            "`matcher` must be a string, function, RegExp, or object")
+            "`matcher` must be a string, function, RegExp, or object"
+        )
     }
 
-    if (typeof callback !== "function") {
-        throw new TypeError("`callback` must be a function")
-    }
+    checkCallable(callback, "callback")
 
     try {
         callback() // eslint-disable-line callback-return
     } catch (e) {
-        assert(throwsMatchTest(matcher, e),
-            "Expected callback to throw an error that matches " +
-            "{expected}, but found {actual}",
-            e, matcher
-        )
+        if (type === 0) {
+            assert(e.message === matcher,
+                "Expected callback to throw an error with message " +
+                "{expected}, but found {actual}",
+                e, matcher
+            )
+        } else if (type === 1) {
+            assert(
+                matcher(e),
+                "Expected callback to throw an error matching " +
+                "{expected}, but found {actual}",
+                e, matcher
+            )
+        } else if (type === 2) {
+            assert(
+                matcher.test(e.message),
+                "Expected callback to throw an error with message " +
+                "matching {expected}, but found {actual}",
+                e, matcher
+            )
+        } else {
+            assert(
+                comparison.hasKeysCheck(
+                    e, matcher,
+                    testHasIn, getProperty, match.loose, false
+                ),
+                "Expected callback to throw an error matching " +
+                "{expected}, but found {actual}",
+                e, matcher
+            )
+        }
         return
     }
 
-    throw new AssertionError("Expected callback to throw.")
+    fail("Expected callback to throw an error", undefined, matcher)
 }
 
-function has(_) { // eslint-disable-line max-len, max-params
-    return function (object, key, value) {
-        if (arguments.length >= 3) {
-            if (!_.has(object, key) || !strictIs(_.get(object, key), value)) {
-                failFormat(_.messages[0], {
-                    expected: value,
-                    actual: object[key],
-                    key: key,
-                    object: object,
-                })
-            }
-        } else if (!_.has(object, key)) {
-            failFormat(_.messages[1], {
-                expected: value,
-                actual: object[key],
-                key: key,
-                object: object,
-            })
-        }
-    }
+exports.exactlyEqual = function (actual, expected) {
+    assert(comparison.sameValueZero(actual, expected),
+        "Expected {actual} to exactly equal {expected}",
+        actual, expected
+    )
 }
 
-function hasLoose(_) {
-    return function (object, key, value) {
-        if (!_.has(object, key) || !looseIs(_.get(object, key), value)) {
-            failFormat(_.messages[0], {
-                expected: value,
-                actual: object[key],
-                key: key,
-                object: object,
-            })
-        }
-    }
+exports.exactlyNotEqual = function (actual, expected) {
+    assert(!comparison.sameValueZero(actual, expected),
+        "Expected {actual} to not exactly equal {expected}",
+        actual, expected
+    )
 }
 
-function notHas(_) { // eslint-disable-line max-len, max-params
-    return function (object, key, value) {
-        if (arguments.length >= 3) {
-            if (_.has(object, key) && strictIs(_.get(object, key), value)) {
-                failFormat(_.messages[2], {
-                    expected: value,
-                    actual: object[key],
-                    key: key,
-                    object: object,
-                })
-            }
-        } else if (_.has(object, key)) {
-            failFormat(_.messages[3], {
-                expected: value,
-                actual: object[key],
-                key: key,
-                object: object,
-            })
-        }
-    }
-}
-
-function notHasLoose(_) { // eslint-disable-line max-len, max-params
-    return function (object, key, value) {
-        if (_.has(object, key) && looseIs(_.get(object, key), value)) {
-            failFormat(_.messages[2], {
-                expected: value,
-                actual: object[key],
-                key: key,
-                object: object,
-            })
-        }
-    }
-}
-
-function hasOwnKey(object, key) { return hasOwn.call(object, key) }
-function hasInKey(object, key) { return key in object }
-function hasInColl(object, key) { return object.has(key) }
-function hasObjectGet(object, key) { return object[key] }
-function hasCollGet(object, key) { return object.get(key) }
-
-function createHas(has, get, messages) {
-    return {has: has, get: get, messages: messages}
-}
-
-var hasOwnMethods = createHas(hasOwnKey, hasObjectGet, [
-    "Expected {object} to have own key {key} equal to {expected}, but found {actual}", // eslint-disable-line max-len
-    "Expected {actual} to have own key {expected}",
-    "Expected {object} to not have own key {key} equal to {actual}",
-    "Expected {actual} to not have own key {expected}",
-])
-
-var hasKeyMethods = createHas(hasInKey, hasObjectGet, [
-    "Expected {object} to have key {key} equal to {expected}, but found {actual}", // eslint-disable-line max-len
-    "Expected {actual} to have key {expected}",
-    "Expected {object} to not have key {key} equal to {actual}",
-    "Expected {actual} to not have key {expected}",
-])
-
-var hasMethods = createHas(hasInColl, hasCollGet, [
-    "Expected {object} to have key {key} equal to {expected}, but found {actual}", // eslint-disable-line max-len
-    "Expected {actual} to have key {expected}",
-    "Expected {object} to not have key {key} equal to {actual}",
-    "Expected {actual} to not have key {expected}",
-])
-
-exports.hasOwn = has(hasOwnMethods)
-exports.notHasOwn = notHas(hasOwnMethods)
-exports.hasOwnLoose = hasLoose(hasOwnMethods)
-exports.notHasOwnLoose = notHasLoose(hasOwnMethods)
-
-exports.hasKey = has(hasKeyMethods)
-exports.notHasKey = notHas(hasKeyMethods)
-exports.hasKeyLoose = hasLoose(hasKeyMethods)
-exports.notHasKeyLoose = notHasLoose(hasKeyMethods)
-
-exports.has = has(hasMethods)
-exports.notHas = notHas(hasMethods)
-exports.hasLoose = hasLoose(hasMethods)
-exports.notHasLoose = notHasLoose(hasMethods)
-
-/**
- * There's 2 sets of 12 permutations here for `includes` and `hasKeys`, instead
- * of N sets of 2 (which would fit the `foo`/`notFoo` idiom better), so it's
- * easier to just make a couple separate DSLs and use that to define everything.
- *
- * Here's the top level:
- *
- * - shallow
- * - strict deep
- * - structural deep
- *
- * And the second level:
- *
- * - includes all/not missing some
- * - includes some/not missing all
- * - not including all/missing some
- * - not including some/missing all
- *
- * Here's an example using the naming scheme for `hasKeys*`
- *
- *               |     shallow     |    strict deep      |   structural deep
- * --------------|-----------------|---------------------|----------------------
- * includes all  | `hasKeys`       | `hasKeysDeep`       | `hasKeysMatch`
- * includes some | `hasKeysAny`    | `hasKeysAnyDeep`    | `hasKeysAnyMatch`
- * missing some  | `notHasKeysAll` | `notHasKeysAllDeep` | `notHasKeysAllMatch`
- * missing all   | `notHasKeys`    | `notHasKeysDeep`    | `notHasKeysMatch`
- *
- * Note that the `hasKeys` shallow comparison variants are also overloaded to
- * consume either an array (in which it simply checks against a list of keys) or
- * an object (where it does a full deep comparison).
- */
-
-function includesArrayValue(array, value, func) {
-    for (var i = 0; i < array.length; i++) {
-        if (func(value, array[i])) return true
-    }
-
-    return false
-}
-
-function includesArrayAny(array, values, func) {
-    var i, j, value
-
-    for (i = 0; i < array.length; i++) {
-        value = array[i]
-        for (j = 0; j < values.length; j++) {
-            if (func(value, values[j])) return true
-        }
-    }
-
-    return false
-}
-
-function includesArrayAll(array, values, func) {
-    var i, j, k, value
-    var count = values.length
-    var hit = new Array(count)
-
-    for (i = 0; i < count; i++) hit[i] = i
-
-    for (i = 0; i < array.length; i++) {
-        value = array[i]
-
-        for (j = 0; j < count; j++) {
-            if (func(value, values[hit[j]])) {
-                for (k = j; k < count; k++) hit[k] = hit[k + 1]
-                if (--count === 0) return true
-            }
-        }
-    }
-
-    return false
-}
-
-function testIncludes(array, values, func, all) {
-    // Cheap cases first
-    if (array === values) return true
-    if (Array.isArray(values)) {
-        if (values.length === 0) return undefined
-        if (!all) return includesArrayAny(array, values, func)
-        if (array.length < values.length) return false
-        return includesArrayAll(array, values, func)
-    } else {
-        if (all && array.length === 0) return false
-        return includesArrayValue(array, values, func)
-    }
-}
-
-function defineIncludes(func, all, invert, message) {
-    return function (iter, values) {
-        if ((iter = castIterableChecked(iter)) == null) {
-            throw new TypeError("`iter` must be an iterable")
-        }
-
-        values = castIfIterable(values)
-
-        if (testIncludes(iter, values, func, all) === invert) {
-            failFormat(message, {actual: iter, values: values})
-        }
-    }
-}
-
-// Note: `undefined` is returned if no keys needed compared - this is
-// conveniently *never* equal to `invert`.
-function hasOverloadTest(all, object, keys) {
-    if (Array.isArray(keys)) {
-        if (keys.length === 0) return undefined
-
-        for (var i = 0; i < keys.length; i++) {
-            var test = hasOwn.call(object, keys[i])
-
-            if (test !== all) return !all
-        }
-
-        return all
-    } else {
-        return hasKeysTest(strictIs, all, object, keys)
-    }
-}
-
-function isEmpty(object) {
-    for (var key in object) {
-        if (hasOwn.call(object, key)) return false
-    }
-
-    return true
-}
-
-function hasKeysTest(func, all, object, keys) {
-    if (isEmpty(keys)) return undefined
-    if (object === keys) return true
-
-    for (var key in keys) {
-        if (hasOwn.call(keys, key)) {
-            var test = hasOwn.call(object, key) && func(keys[key], object[key])
-
-            if (test !== all) return test
-        }
-    }
-
-    return all
-}
-
-function makeHasOverload(all, invert, message) {
-    return function (object, keys) {
-        if (!isReferenceType(object)) {
-            throw new TypeError("`object` must be an object")
-        }
-
-        if (!isReferenceType(keys)) {
-            throw new TypeError("`keys` must be an object or array")
-        }
-
-        keys = castIfIterable(keys)
-
-        // exclusive or to invert the result if `invert` is true
-        // boolean equality is equivalent to exclusive or
-        if (hasOverloadTest(all, object, keys) === invert) {
-            failFormat(message, {actual: object, keys: keys})
-        }
-    }
-}
-
-function makeHasKeys(func, all, invert, message) {
-    return function (object, keys) {
-        if (!isReferenceType(object)) {
-            throw new TypeError("`object` must be an object")
-        }
-
-        if (!isReferenceType(keys)) {
-            throw new TypeError("`keys` must be an object")
-        }
-
-        // exclusive or to invert the result if `invert` is true
-        // boolean equality is equivalent to exclusive or
-        if (hasKeysTest(func, all, object, keys) === invert) {
-            failFormat(message, {actual: object, keys: keys})
-        }
-    }
-}
+exports.exactlyEqualsAny = makeEqualsAny(comparison.sameValueZero, 0)
+exports.exactlyEqualsNone = makeEqualsAny(comparison.sameValueZero, 1)
 
 /* eslint-disable max-len */
+exports.exactlyHasOwn = makeHas(testHasOwn, getProperty, comparison.sameValueZero, 0x0)
+exports.exactlyLacksOwn = makeHas(testHasOwn, getProperty, comparison.sameValueZero, 0x2)
 
-exports.includes = defineIncludes(strictIs, true, false, "Expected {actual} to have all values in {values}")
-exports.includesDeep = defineIncludes(match.strict, true, false, "Expected {actual} to match all values in {values}")
-exports.includesMatch = defineIncludes(match.loose, true, false, "Expected {actual} to match all values in {values}")
-exports.includesAny = defineIncludes(strictIs, false, false, "Expected {actual} to have any value in {values}")
-exports.includesAnyDeep = defineIncludes(match.strict, false, false, "Expected {actual} to match any value in {values}")
-exports.includesAnyMatch = defineIncludes(match.loose, false, false, "Expected {actual} to match any value in {values}")
-exports.notIncludesAll = defineIncludes(strictIs, true, true, "Expected {actual} to not have all values in {values}")
-exports.notIncludesAllDeep = defineIncludes(match.strict, true, true, "Expected {actual} to not match all values in {values}")
-exports.notIncludesAllMatch = defineIncludes(match.loose, true, true, "Expected {actual} to not match all values in {values}")
-exports.notIncludes = defineIncludes(strictIs, false, true, "Expected {actual} to not have any value in {values}")
-exports.notIncludesDeep = defineIncludes(match.strict, false, true, "Expected {actual} to not match any value in {values}")
-exports.notIncludesMatch = defineIncludes(match.loose, false, true, "Expected {actual} to not match any value in {values}")
+exports.exactlyHasIn = makeHas(testHasIn, getProperty, comparison.sameValueZero, 0x4)
+exports.exactlyLacksIn = makeHas(testHasIn, getProperty, comparison.sameValueZero, 0x6)
 
-exports.hasKeys = makeHasOverload(true, false, "Expected {actual} to have all keys in {keys}")
-exports.hasKeysDeep = makeHasKeys(match.strict, true, false, "Expected {actual} to have all keys in {keys}")
-exports.hasKeysMatch = makeHasKeys(match.loose, true, false, "Expected {actual} to match all keys in {keys}")
-exports.hasKeysAny = makeHasOverload(false, false, "Expected {actual} to have any key in {keys}")
-exports.hasKeysAnyDeep = makeHasKeys(match.strict, false, false, "Expected {actual} to have any key in {keys}")
-exports.hasKeysAnyMatch = makeHasKeys(match.loose, false, false, "Expected {actual} to match any key in {keys}")
-exports.notHasKeysAll = makeHasOverload(true, true, "Expected {actual} to not have all keys in {keys}")
-exports.notHasKeysAllDeep = makeHasKeys(match.strict, true, true, "Expected {actual} to not have all keys in {keys}")
-exports.notHasKeysAllMatch = makeHasKeys(match.loose, true, true, "Expected {actual} to not match all keys in {keys}")
-exports.notHasKeys = makeHasOverload(false, true, "Expected {actual} to not have any key in {keys}")
-exports.notHasKeysDeep = makeHasKeys(match.strict, false, true, "Expected {actual} to not have any key in {keys}")
-exports.notHasKeysMatch = makeHasKeys(match.loose, false, true, "Expected {actual} to not match any key in {keys}")
+exports.exactlyHasKey = makeHas(testHasKey, getMethod, comparison.sameValueZero, 0x4)
+exports.exactlyLacksKey = makeHas(testHasKey, getMethod, comparison.sameValueZero, 0x6)
+
+exports.exactlyIncludes = makeIncludes(comparison.sameValueZero, 0x0)
+exports.exactlyExcludes = makeIncludes(comparison.sameValueZero, 0x1)
+
+exports.exactlyIncludesAll = makeIncludesMulti(comparison.sameValueZero, 0x0)
+exports.exactlyExcludesAll = makeIncludesMulti(comparison.sameValueZero, 0x2)
+
+exports.exactlyIncludesAny = makeIncludesMulti(comparison.sameValueZero, 0x1)
+exports.exactlyExcludesAny = makeIncludesMulti(comparison.sameValueZero, 0x3)
+
+exports.exactlyHasAllOwn = makeHasKeys(0x0, testHasOwn, getProperty, comparison.sameValueZero)
+exports.exactlyLacksAllOwn = makeHasKeys(0x2, testHasOwn, getProperty, comparison.sameValueZero)
+
+exports.exactlyHasAnyOwn = makeHasKeys(0x1, testHasOwn, getProperty, comparison.sameValueZero)
+exports.exactlyLacksAnyOwn = makeHasKeys(0x3, testHasOwn, getProperty, comparison.sameValueZero)
+
+exports.exactlyHasAllIn = makeHasKeys(0x0, testHasIn, getProperty, comparison.sameValueZero)
+exports.exactlyLacksAllIn = makeHasKeys(0x2, testHasIn, getProperty, comparison.sameValueZero)
+
+exports.exactlyHasAnyIn = makeHasKeys(0x1, testHasIn, getProperty, comparison.sameValueZero)
+exports.exactlyLacksAnyIn = makeHasKeys(0x3, testHasIn, getProperty, comparison.sameValueZero)
+
+exports.exactlyHasAllKeys = makeHasKeys(0x0, testHasKey, getMethod, comparison.sameValueZero)
+exports.exactlyLacksAllKeys = makeHasKeys(0x2, testHasKey, getMethod, comparison.sameValueZero)
+
+exports.exactlyHasAnyKey = makeHasKeys(0x1, testHasKey, getMethod, comparison.sameValueZero)
+exports.exactlyLacksAnyKey = makeHasKeys(0x3, testHasKey, getMethod, comparison.sameValueZero)
+/* eslint-enable max-len */
+
+exports.deeplyEqual = function (actual, expected) {
+    assert(match.strict(actual, expected),
+        "Expected {actual} to deeply equal {expected}",
+        actual, expected
+    )
+}
+
+exports.deeplyNotEqual = function (actual, expected) {
+    assert(!match.strict(actual, expected),
+        "Expected {actual} to deeply equal {expected}",
+        actual, expected
+    )
+}
+
+exports.deeplyEqualsAny = makeEqualsAny(match.strict, 0)
+exports.deeplyEqualsNone = makeEqualsAny(match.strict, 1)
+
+exports.deeplyHasOwn = makeHas(testHasOwn, getProperty, match.strict, 0x0)
+exports.deeplyLacksOwn = makeHas(testHasOwn, getProperty, match.strict, 0x2)
+
+exports.deeplyHasIn = makeHas(testHasIn, getProperty, match.strict, 0x4)
+exports.deeplyLacksIn = makeHas(testHasIn, getProperty, match.strict, 0x6)
+
+exports.deeplyHasKey = makeHas(testHasKey, getMethod, match.strict, 0x4)
+exports.deeplyLacksKey = makeHas(testHasKey, getMethod, match.strict, 0x6)
+
+exports.deeplyIncludes = makeIncludes(match.strict, 0x0)
+exports.deeplyExcludes = makeIncludes(match.strict, 0x1)
+
+exports.deeplyIncludesAll = makeIncludesMulti(match.strict, 0x0)
+exports.deeplyExcludesAll = makeIncludesMulti(match.strict, 0x2)
+
+exports.deeplyIncludesAny = makeIncludesMulti(match.strict, 0x1)
+exports.deeplyExcludesAny = makeIncludesMulti(match.strict, 0x3)
+
+/* eslint-disable max-len */
+exports.deeplyHasAllOwn = makeHasKeys(0x0, testHasOwn, getProperty, match.strict)
+exports.deeplyLacksAllOwn = makeHasKeys(0x2, testHasOwn, getProperty, match.strict)
+
+exports.deeplyHasAnyOwn = makeHasKeys(0x1, testHasOwn, getProperty, match.strict)
+exports.deeplyLacksAnyOwn = makeHasKeys(0x3, testHasOwn, getProperty, match.strict)
+
+exports.deeplyHasAllIn = makeHasKeys(0x0, testHasIn, getProperty, match.strict)
+exports.deeplyLacksAllIn = makeHasKeys(0x2, testHasIn, getProperty, match.strict)
+
+exports.deeplyHasAnyIn = makeHasKeys(0x1, testHasIn, getProperty, match.strict)
+exports.deeplyLacksAnyIn = makeHasKeys(0x3, testHasIn, getProperty, match.strict)
+
+exports.deeplyHasAllKeys = makeHasKeys(0x0, testHasKey, getMethod, match.strict)
+exports.deeplyLacksAllKeys = makeHasKeys(0x2, testHasKey, getMethod, match.strict)
+
+exports.deeplyHasAnyKey = makeHasKeys(0x1, testHasKey, getMethod, match.strict)
+exports.deeplyLacksAnyKey = makeHasKeys(0x3, testHasKey, getMethod, match.strict)
+/* eslint-enable max-len */

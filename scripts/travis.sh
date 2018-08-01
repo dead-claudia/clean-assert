@@ -3,7 +3,7 @@ set -ev
 
 case ${ENV} in
     node) mocha ;;
-    phantomjs) karma start --browsers PhantomJS --single-run ;;
+    phantomjs) npm run test:phantomjs ;;
     chrome)
         sudo apt-get update
         sudo apt-get install -y libappindicator1 fonts-liberation

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Mocha tests</title>
+<script src="../node_modules/mocha/mocha.js"></script>
+<script>
+if (typeof initMochaPhantomJS === "function") initMochaPhantomJS()
+mocha.setup('bdd')
+</script>
+<script src="test-bundle.js"></script>
+<script>
+mocha.checkLeaks()
+mocha.run()
+</script>

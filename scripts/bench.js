@@ -89,6 +89,6 @@ function init(suite) { // eslint-disable-line max-statements
         })
     }
 
-    require("./test/match-impl.js") // eslint-disable-line global-require
+    require("./test/match.js") // eslint-disable-line global-require
     suiteInit()
 }

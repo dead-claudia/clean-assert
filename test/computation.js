@@ -1,302 +1,255 @@
 "use strict"
 
 var assert = require("../index")
-var util = require("../test-util")
+var util = require("../scripts/test-util")
 
 describe("clean-assert (computation)", function () {
-    describe("throws()", function () {
-        it("works", function () {
-            assert.throws(function () { throw new Error("fail") })
-            assert.throws(TypeError, function () { throw new TypeError("fail") }) // eslint-disable-line max-len
-            assert.throws(Error, function () { throw new TypeError("fail") })
-            util.fail("throws", Error, function () {})
-            util.fail("throws", function () {})
-        })
+    util.testSingle("throws", function (pass, fail) {
+        function throwTypeError() { throw new TypeError("fail") }
+        function throwReferenceError() { throw new ReferenceError("fail") }
+        function throwError() { throw new Error("fail") }
+        function noop() {}
 
-        it("doesn't rethrow non-matching errors", function () {
-            util.fail("throws", TypeError, function () {
-                throw new Error("fail")
-            })
-        })
-
-        it("doesn't rethrow non-errors", function () {
-            /* eslint-disable no-throw-literal */
-
-            assert.throws(function () { throw undefined })
-            assert.throws(function () { throw null })
-            assert.throws(function () { throw 1 })
-            assert.throws(function () { throw "why" })
-            assert.throws(function () { throw true })
-            assert.throws(function () { throw [] })
-            assert.throws(function () { throw {} })
-
-            util.fail("throws", Error, function () { throw undefined })
-            util.fail("throws", Error, function () { throw null })
-            util.fail("throws", Error, function () { throw 1 })
-            util.fail("throws", Error, function () { throw "why" })
-            util.fail("throws", Error, function () { throw true })
-            util.fail("throws", Error, function () { throw [] })
-            util.fail("throws", Error, function () { throw {} })
-
-            /* eslint-disable no-undef */
-
-            if (typeof Symbol === "function") {
-                assert.throws(function () { throw Symbol() })
-                util.fail("throws", Error, function () { throw Symbol() })
-            }
-
-            /* eslint-enable no-undef, no-throw-literal */
-        })
+        return {
+            "passes if matching error type thrown": function () {
+                pass(Error, throwError)
+                pass(ReferenceError, throwReferenceError)
+                pass(TypeError, throwTypeError)
+            },
+            "passes if inherited error type thrown": function () {
+                pass(Error, throwTypeError)
+            },
+            "fails if no error thrown": function () {
+                fail(Error, noop)
+            },
+            "captures and fails on supertype instance": function () {
+                fail(TypeError, throwError)
+            },
+            "captures and fails on unrelated type instance": function () {
+                fail(TypeError, throwReferenceError)
+            },
+            "works with strings": function () {
+                // eslint-disable-next-line no-throw-literal
+                pass("string", function () { throw "foo" })
+                fail("string", throwReferenceError)
+            },
+        }
     })
 
-    describe("throwsMatch()", function () {
-        it("works", function () {
-            var sentinel = new Error("sentinel")
+    util.testSingle("throwsMatching", function (pass, fail) {
+        var sentinel = new Error("sentinel")
 
-            function test() { throw sentinel }
-            function is(e) { return e === sentinel }
-            function not(e) { return e !== sentinel }
+        sentinel.someKey = {foo: "bar"}
+        function test() { throw sentinel }
+        function is(e) { return e === sentinel }
+        function not(e) { return e !== sentinel }
 
-            assert.throwsMatch(is, test)
-            assert.throwsMatch("sentinel", test)
-            assert.throwsMatch(/sent/, test)
-            assert.throwsMatch({message: "sentinel"}, test)
+        return {
+            "passes if matcher returns truthy": function () {
+                pass(is, test)
+            },
+            "passes if message equals string": function () {
+                pass("sentinel", test)
+            },
+            "passes if message matches regexp": function () {
+                pass(/sent/, test)
+            },
+            "passes if error matches structure": function () {
+                pass({message: "sentinel", someKey: {foo: "bar"}}, test)
+            },
+            "fails if matcher returns falsy": function () {
+                fail(not, test)
+            },
+            "fails if no error could be checked": function () {
+                var count = 0
 
-            util.fail("throwsMatch", not, test)
-            util.fail("throwsMatch", not, function () {})
-            util.fail("throwsMatch", "nope", test)
-            util.fail("throwsMatch", /hi/, test)
-            util.fail("throwsMatch", {message: "nope"}, test)
-        })
+                fail(function () { count++ }, function () {})
+                assert.equal(count, 0)
+            },
+            "fails if message doesn't equal string": function () {
+                fail("nope", test)
+            },
+            "fails if regexp doesn't match message": function () {
+                fail(/hi/, test)
+            },
+            "fails if object doesn't match at top level": function () {
+                fail({message: "nope"}, test)
+            },
+            "fails if object doesn't match deeply": function () {
+                fail({message: "sentinel", someKey: {foo: "nope"}}, test)
+            },
+        }
     })
 
-    describe("atLeast()", function () {
-        it("works", function () {
-            assert.atLeast(0, 0)
-            assert.atLeast(1, 1)
-            assert.atLeast(1, -1)
-            assert.atLeast(12398.4639, 1245.472398)
+    util.testPair("atLeast", "below", function (pass, fail, never) {
+        return {
+            "works": function () {
+                pass(0, 0)
+                pass(1, 1)
+                pass(1, -1)
+                pass(12398.4639, 1245.472398)
 
-            util.fail("atLeast", 0, 1000)
-            util.fail("atLeast", -1, 1)
-            util.fail("atLeast", -1, 0)
-        })
+                fail(0, 1000)
+                fail(-1, 1)
+                fail(-1, 0)
+            },
 
-        it("works with Infinities", function () {
-            assert.atLeast(0, -Infinity)
-            assert.atLeast(-Infinity, -Infinity)
-            assert.atLeast(Infinity, -Infinity)
-            assert.atLeast(Infinity, 0)
-            assert.atLeast(Infinity, Infinity)
+            "works with Infinities": function () {
+                pass(0, -Infinity)
+                pass(-Infinity, -Infinity)
+                pass(Infinity, -Infinity)
+                pass(Infinity, 0)
+                pass(Infinity, Infinity)
+                fail(-Infinity, Infinity)
+                fail(-Infinity, 0)
+            },
 
-            util.fail("atLeast", -Infinity, Infinity)
-            util.fail("atLeast", -Infinity, 0)
-        })
-
-        it("fails with NaNs", function () {
-            util.fail("atLeast", NaN, 0)
-            util.fail("atLeast", 0, NaN)
-            util.fail("atLeast", NaN, NaN)
-            util.fail("atLeast", NaN, Infinity)
-            util.fail("atLeast", Infinity, NaN)
-            util.fail("atLeast", NaN, -Infinity)
-            util.fail("atLeast", -Infinity, NaN)
-        })
+            "fails with NaNs": function () {
+                never(NaN, 0)
+                never(0, NaN)
+                never(NaN, NaN)
+                never(NaN, Infinity)
+                never(Infinity, NaN)
+                never(NaN, -Infinity)
+                never(-Infinity, NaN)
+            },
+        }
     })
 
-    describe("atMost()", function () {
-        it("works", function () {
-            assert.atMost(0, 0)
-            assert.atMost(1, 1)
-            util.fail("atMost", 1, -1)
-            util.fail("atMost", 12398.4639, 1245.472398)
+    util.testPair("atMost", "above", function (pass, fail, never) {
+        return {
+            "works": function () {
+                pass(0, 0)
+                pass(1, 1)
+                fail(1, -1)
+                fail(12398.4639, 1245.472398)
 
-            assert.atMost(0, 1000)
-            assert.atMost(-1, 1)
-            assert.atMost(-1, 0)
-        })
+                pass(0, 1000)
+                pass(-1, 1)
+                pass(-1, 0)
+            },
 
-        it("works with Infinities", function () {
-            util.fail("atMost", 0, -Infinity)
-            assert.atMost(-Infinity, -Infinity)
-            util.fail("atMost", Infinity, -Infinity)
-            util.fail("atMost", Infinity, 0)
-            assert.atMost(Infinity, Infinity)
+            "works with Infinities": function () {
+                fail(0, -Infinity)
+                pass(-Infinity, -Infinity)
+                fail(Infinity, -Infinity)
+                fail(Infinity, 0)
+                pass(Infinity, Infinity)
 
-            assert.atMost(-Infinity, Infinity)
-            assert.atMost(-Infinity, 0)
-        })
+                pass(-Infinity, Infinity)
+                pass(-Infinity, 0)
+            },
 
-        it("fails with NaNs", function () {
-            util.fail("atMost", NaN, 0)
-            util.fail("atMost", 0, NaN)
-            util.fail("atMost", NaN, NaN)
-            util.fail("atMost", NaN, Infinity)
-            util.fail("atMost", Infinity, NaN)
-            util.fail("atMost", NaN, -Infinity)
-            util.fail("atMost", -Infinity, NaN)
-        })
+            "fails with NaNs": function () {
+                never(NaN, 0)
+                never(0, NaN)
+                never(NaN, NaN)
+                never(NaN, Infinity)
+                never(Infinity, NaN)
+                never(NaN, -Infinity)
+                never(-Infinity, NaN)
+            },
+        }
     })
 
-    describe("below()", function () {
-        it("works", function () {
-            util.fail("below", 0, 0)
-            util.fail("below", 1, 1)
-            util.fail("below", 1, -1)
-            util.fail("below", 12398.4639, 1245.472398)
+    util.testPair("between", "notBetween", function (pass, fail, never) {
+        return {
+            "works": function () {
+                pass(0, 0, 1)
+                pass(1, 0, 1)
+                pass(1, 1, 1)
+                pass(0, -1, 1)
+                fail(1, -1, 0)
+                pass(1, -1, 1)
+                fail(12398.4639, 1245.472398, 12345.12345)
+            },
 
-            assert.below(0, 1000)
-            assert.below(-1, 1)
-            assert.below(-1, 0)
-        })
+            "works with Infinities": function () {
+                fail(0, -Infinity, -1)
+                pass(0, -Infinity, 0)
+                pass(-Infinity, -Infinity, -Infinity)
+                pass(-Infinity, -Infinity, 0)
+                fail(Infinity, -Infinity, 0)
+                fail(Infinity, 0, 0)
+                pass(Infinity, 0, Infinity)
+                pass(-Infinity, -Infinity, Infinity)
+            },
 
-        it("works with Infinities", function () {
-            util.fail("below", 0, -Infinity)
-            util.fail("below", -Infinity, -Infinity)
-            util.fail("below", Infinity, -Infinity)
-            util.fail("below", Infinity, 0)
-            util.fail("below", Infinity, Infinity)
-
-            assert.below(-Infinity, Infinity)
-            assert.below(-Infinity, 0)
-        })
-
-        it("fails with NaNs", function () {
-            util.fail("below", NaN, 0)
-            util.fail("below", 0, NaN)
-            util.fail("below", NaN, NaN)
-            util.fail("below", NaN, Infinity)
-            util.fail("below", Infinity, NaN)
-            util.fail("below", NaN, -Infinity)
-            util.fail("below", -Infinity, NaN)
-        })
+            "fails with NaNs": function () {
+                never(NaN, 0, NaN)
+                never(NaN, NaN, 0)
+                never(0, NaN, 0)
+                never(0, 0, NaN)
+                never(NaN, NaN, NaN)
+                never(NaN, 0, Infinity)
+                never(NaN, -Infinity, 0)
+                never(NaN, -Infinity, Infinity)
+                never(Infinity, NaN, 0)
+                never(Infinity, 0, NaN)
+                never(Infinity, NaN, NaN)
+                never(-Infinity, NaN, 0)
+                never(-Infinity, 0, NaN)
+                never(-Infinity, NaN, NaN)
+            },
+        }
     })
 
-    describe("between()", function () {
-        it("works", function () {
-            assert.between(0, 0, 1)
-            assert.between(1, 0, 1)
-            assert.between(1, 1, 1)
-            assert.between(0, -1, 1)
-            util.fail("between", 1, -1, 0)
-            assert.between(1, -1, 1)
-            util.fail("between", 12398.4639, 1245.472398, 12345.12345)
-        })
+    util.testPair("closeTo", "notCloseTo", function (pass, fail, never) {
+        return {
+            "works with default tolerance": function () {
+                pass(0, 0)
+                pass(0, -0)
+                pass(0, 1e-10)
+                pass(0, -1e-10)
+                pass(1, 1)
+                pass(1, 1 + 1e-10)
+                // It should not pass if it's at least mildly non-zero
+                fail(0, 0.000001)
+                fail(0, -0.000001)
+                fail(1, 1.0000001)
+            },
 
-        it("works with Infinities", function () {
-            util.fail("between", 0, -Infinity, -1)
-            assert.between(0, -Infinity, 0)
-            assert.between(-Infinity, -Infinity, -Infinity)
-            assert.between(-Infinity, -Infinity, 0)
-            util.fail("between", Infinity, -Infinity, 0)
-            util.fail("between", Infinity, 0, 0)
-            assert.between(Infinity, 0, Infinity)
-            assert.between(-Infinity, -Infinity, Infinity)
-        })
+            "works with explicit tolerance": function () {
+                pass(0, 0, 0)
+                pass(0, -0, 0)
+                pass(0, 0.1, 0.1)
+                pass(0, -0.1, 0.1)
+                pass(1, 0.5, 0.5)
+                pass(-1, -0.5, 1)
+                pass(0, -0.5, 1)
+                pass(0, 0.5, 1)
+                fail(0, 0.2, 0.1)
+                fail(0, -0.2, 0.1)
+                fail(0, 1, 0.5)
+                fail(-1, 1, 0.5)
+                fail(0, -1, 0.5)
+            },
 
-        it("fails with NaNs", function () {
-            util.fail("between", NaN, 0, NaN)
-            util.fail("between", NaN, NaN, 0)
-            util.fail("between", 0, NaN, 0)
-            util.fail("between", 0, 0, NaN)
-            util.fail("between", NaN, NaN, NaN)
-            util.fail("between", NaN, 0, Infinity)
-            util.fail("between", NaN, -Infinity, 0)
-            util.fail("between", NaN, -Infinity, Infinity)
-            util.fail("between", Infinity, NaN, 0)
-            util.fail("between", Infinity, 0, NaN)
-            util.fail("between", Infinity, NaN, NaN)
-            util.fail("between", -Infinity, NaN, 0)
-            util.fail("between", -Infinity, 0, NaN)
-            util.fail("between", -Infinity, NaN, NaN)
-        })
-    })
+            "works with Infinities": function () {
+                pass(0, 0, Infinity)
+                pass(0, 100, Infinity)
+                pass(0, Infinity, Infinity)
+                pass(-Infinity, Infinity, Infinity)
+                pass(0, 0, Infinity)
+                pass(100, 0, Infinity)
+                pass(Infinity, 0, Infinity)
+                pass(Infinity, -Infinity, Infinity)
+            },
 
-    describe("closeTo()", function () {
-        it("works", function () {
-            assert.closeTo(0, 0, 0)
-            assert.closeTo(0, -0, 0)
-            assert.closeTo(0, 0.1, 0.2)
-            assert.closeTo(0, -0.1, 0.2)
-            assert.closeTo(1, 0.5, 1)
-            assert.closeTo(-1, -0.5, 1)
-            assert.closeTo(0, -0.5, 1)
-            assert.closeTo(0, 0.5, 1)
-            util.fail("closeTo", 0, 0.2, 0.1)
-            util.fail("closeTo", 0, -0.2, 0.1)
-            util.fail("closeTo", 0, 1, 0.2)
-            util.fail("closeTo", -1, 1, 0.2)
-            util.fail("closeTo", 0, 1, 0.2)
-        })
-
-        it("works with Infinities", function () {
-            assert.closeTo(0, 0, Infinity)
-            assert.closeTo(0, 100, Infinity)
-            assert.closeTo(0, Infinity, Infinity)
-            assert.closeTo(-Infinity, Infinity, Infinity)
-            assert.closeTo(0, 0, Infinity)
-            assert.closeTo(100, 0, Infinity)
-            assert.closeTo(Infinity, 0, Infinity)
-            assert.closeTo(Infinity, -Infinity, Infinity)
-        })
-
-        it("fails with NaNs", function () {
-            util.fail("closeTo", 0, NaN, 0)
-            util.fail("closeTo", 0, NaN, Infinity)
-            util.fail("closeTo", Infinity, NaN, 0)
-            util.fail("closeTo", Infinity, NaN, Infinity)
-            util.fail("closeTo", -Infinity, NaN, 0)
-            util.fail("closeTo", -Infinity, NaN, Infinity)
-            util.fail("closeTo", NaN, 0, 0)
-            util.fail("closeTo", NaN, 0, Infinity)
-            util.fail("closeTo", NaN, Infinity, 0)
-            util.fail("closeTo", NaN, Infinity, Infinity)
-            util.fail("closeTo", NaN, -Infinity, 0)
-            util.fail("closeTo", NaN, -Infinity, Infinity)
-        })
-    })
-
-    describe("notCloseTo()", function () {
-        it("works", function () {
-            util.fail("notCloseTo", 0, 0, 0)
-            util.fail("notCloseTo", 0, 0, 0)
-            util.fail("notCloseTo", 0, 0.1, 0.2)
-            util.fail("notCloseTo", 0, -0.1, 0.2)
-            util.fail("notCloseTo", 1, 0.5, 1)
-            util.fail("notCloseTo", -1, -0.5, 1)
-            util.fail("notCloseTo", 0, -0.5, 1)
-            util.fail("notCloseTo", 0, 0.5, 1)
-            assert.notCloseTo(0, 0.2, 0.1)
-            assert.notCloseTo(0, -0.2, 0.1)
-            assert.notCloseTo(0, 1, 0.2)
-            assert.notCloseTo(-1, 1, 0.2)
-            assert.notCloseTo(0, 1, 0.2)
-        })
-
-        it("works with Infinities", function () {
-            util.fail("notCloseTo", 0, 0, Infinity)
-            util.fail("notCloseTo", 0, 100, Infinity)
-            util.fail("notCloseTo", 0, Infinity, Infinity)
-            util.fail("notCloseTo", -Infinity, Infinity, Infinity)
-            util.fail("notCloseTo", 0, 0, Infinity)
-            util.fail("notCloseTo", 100, 0, Infinity)
-            util.fail("notCloseTo", Infinity, 0, Infinity)
-            util.fail("notCloseTo", Infinity, -Infinity, Infinity)
-        })
-
-        it("fails with NaNs", function () {
-            util.fail("notCloseTo", 0, NaN, 0)
-            util.fail("notCloseTo", 0, NaN, Infinity)
-            util.fail("notCloseTo", Infinity, NaN, 0)
-            util.fail("notCloseTo", Infinity, NaN, Infinity)
-            util.fail("notCloseTo", -Infinity, NaN, 0)
-            util.fail("notCloseTo", -Infinity, NaN, Infinity)
-            util.fail("notCloseTo", NaN, 0, 0)
-            util.fail("notCloseTo", NaN, 0, Infinity)
-            util.fail("notCloseTo", NaN, Infinity, 0)
-            util.fail("notCloseTo", NaN, Infinity, Infinity)
-            util.fail("notCloseTo", NaN, -Infinity, 0)
-            util.fail("notCloseTo", NaN, -Infinity, Infinity)
-        })
+            "fails with NaNs": function () {
+                never(0, NaN, 0)
+                never(0, NaN, Infinity)
+                never(Infinity, NaN, 0)
+                never(Infinity, NaN, Infinity)
+                never(-Infinity, NaN, 0)
+                never(-Infinity, NaN, Infinity)
+                never(NaN, 0, 0)
+                never(NaN, 0, Infinity)
+                never(NaN, Infinity, 0)
+                never(NaN, Infinity, Infinity)
+                never(NaN, -Infinity, 0)
+                never(NaN, -Infinity, Infinity)
+            },
+        }
     })
 })

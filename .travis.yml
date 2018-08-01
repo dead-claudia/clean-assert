@@ -22,7 +22,7 @@ script:
   - nvm use stable
   - npm run lint
   - nvm use ${TRAVIS_NODE_VERSION}
-  - ./travis.sh
+  - ./scripts/travis.sh
 
 matrix:
   include:
