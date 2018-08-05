@@ -353,43 +353,8 @@ function makeHasKeys(mask, test, get, is) {
 }
 
 /**
- * Pretty much all the assertion methods fit within a single 2x3x14 matrix:
- *
- * Top level: (truth, falsehood)
- *
- * - Is true (like `assert.ok`)
- * - Not true (like `assert.notOk`)
- *
- * Second level: (match type)
- *
- * - Structural via `matchLoose` (like `assert.includes`)
- * - Exact via [SameValueZero][1] (like `assert.exactlyIncludes`)
- * - Deep via `matchStrict` (like `assert.deeplyIncludes`)
- *
- * Third level: (match location)
- *
- * - Equality (like `assert.equals`)
- * - Has own key (like `assert.hasOwn(object, k)`)
- * - Has accessible key (like `assert.hasIn(object, k)`)
- * - Has map/set key (like `assert.hasKey(object, k)`)
- * - Has own key set to a value (like `assert.hasOwn(object, k, v)`)
- * - Has accessible key set to a value (like `assert.hasIn(object, k, v)`)
- * - Has map/set key (like `assert.hasKey(object, k, v)`)
- * - Includes single value (like `assert.includes`)
- * - Includes all values (like `assert.includesAll`)
- * - Includes any value (like `assert.includesAny`)
- * - Has all own keys (like `assert.hasAllOwn(object, [...keys])`)
- * - Has any own key (like `assert.hasAnyOwn(object, [...keys])`)
- * - Has all own pairs (like `assert.hasAllOwn(object, {...pairs})`)
- * - Has any own pair (like `assert.hasAnyOwn(object, {...pairs})`)
- * - Has all accessible keys (like `assert.hasAllIn(object, [...keys])`)
- * - Has any accessible key (like `assert.hasAnyIn(object, [...keys])`)
- * - Has all accessible pairs (like `assert.hasAllIn(object, {...pairs})`)
- * - Has any accessible pair (like `assert.hasAnyIn(object, {...pairs})`)
- * - Has all map keys (like `assert.hasAllKeys(object, [...keys])`)
- * - Has any map key (like `assert.hasAnyKey(object, [...keys])`)
- * - Has all map pairs (like `assert.hasAllKeys(object, {...pairs})`)
- * - Has any map pair (like `assert.hasAnyKey(object, {...pairs})`)
+ * Pretty much all the assertion methods fit within a single multi-dimensional
+ * matrix documented within `docs/README.md`.
  *
  * Not all assertion methods have variants in each of these:
  *
