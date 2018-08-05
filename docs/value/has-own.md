@@ -10,28 +10,18 @@ Sometimes, you want to check that one or more *own* properties exist in an objec
 For the second, one concrete example might be a simple "context" system for a view:
 
 ```js
-var Context = (function () {
-    var current = Object.freeze(Object.create(null))
-
-    return {
-        get current() { return current },
-        set: function (keys, init) {
-            var prev = this.current
-            var next = Object.create(prev)
-            for (var key in keys) {
-                if ({}.hasOwnProperty.call(keys, key)) {
-                    next[key] = keys[key]
-                }
-            }
-            this.current = Object.freeze(next)
-            try {
-                init()
-            } finally {
-                this.current = prev
-            }
+const Context = ((current = Object.freeze(Object.create(null))) => ({
+    get current() { return current },
+    set(keys, init) {
+        const prev = current
+        current = Object.freeze(Object.assign(Object.create(prev), keys))
+        try {
+            init()
+        } finally {
+            current = prev
         }
     }
-})()
+}))()
 ```
 
 If you wanted to test whether a key was set in the most recent recursive call, that's what these assertions are for.

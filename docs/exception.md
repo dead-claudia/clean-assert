@@ -7,7 +7,7 @@ Sometimes, you need to check if something throws an exception. That's what these
 ## `assert.throws(Type, ...)`
 
 ```js
-assert.throws(Type, function () {
+assert.throws(Type, () => {
     // do something
 })
 ```
@@ -17,7 +17,7 @@ Assert that a function throws a value satisfying a particular type. Any type tha
 ## `assert.throwsMatching(matcher, ...)`
 
 ```js
-assert.throwsMatching(matcher, function () {
+assert.throwsMatching(matcher, () => {
     // do something
 })
 ```

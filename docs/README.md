@@ -1,7 +1,11 @@
 # Clean Assert API
 
 ```js
+// CommonJS
 const assert = require("clean-assert")
+
+// ES modules (assuming CommonJS interop is possible)
+import assert from "clean-assert"
 ```
 
 Within Clean Assert, there are about 100 assertions, but they're all very much so related. Each of them exists for a particular use case, but even some of the seemingly obscure ones are themselves pretty useful.

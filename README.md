@@ -19,10 +19,11 @@ So what isn't there to love?
 
 ## Installation
 
-Install via [npm](https://www.npmjs.com/package/clean-assert):
+Install via [npm](https://www.npmjs.com/package/clean-assert) or Yarn:
 
 ```
-npm install --save clean-assert
+npm install --save-dev clean-assert
+yarn add clean-assert
 ```
 
 Or, if you just want to [try it out in a browser](https://flems.io/#0=N4IgNglgdg1gziAXAbVFAhgWwKZJAczAHsAjdMAOgCsEAaEAVwCcw8ALAFw4Ac5EB6fgyjcY+CgGMimfhLDZ0UALTo4cbEw79CpctTogOAT265EIGiAC+AXStA), add one of these `<script>` elements to your `<head>`:
