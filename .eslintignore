@@ -1,3 +1,7 @@
 /node_modules
 /npm-debug.log
 /.eslintcache
+
+# Generated scripts
+/global.js
+/scripts/test-bundle.js

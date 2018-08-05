@@ -1,7 +1,7 @@
 {
   "name": "clean-assert",
   "version": "2.0.0",
-  "description": "A simple TDD assertion library, initially designed for Thallium",
+  "description": "A simple, intuitive TDD assertion library",
   "scripts": {
     "lint": "eslint . --cache",
     "test": "eslint . && npm run test:node",
@@ -11,13 +11,16 @@
     "test:firefox": "karma start --colors --single-run --browsers Firefox",
     "test:phantomjs:bundle": "browserify scripts/test-main.js --outfile scripts/test-bundle.js",
     "test:phantomjs:run": "node_modules/.bin/phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js scripts/test.html dot '{\"useColors\": true}'",
-    "test:phantomjs": "npm run test:phantomjs:bundle && npm run test:phantomjs:run && node scripts/test-cleanup.js"
+    "test:phantomjs": "npm run test:phantomjs:bundle && npm run test:phantomjs:run && node scripts/test-cleanup.js",
+    "bundle": "browserify ./browser-export.js --outfile global.js",
+    "preversion": "npm run bundle && git add global.js"
   },
   "files": [
     "index.d.ts",
     "index.js",
+    "global.js",
     "lib",
-    "api.md"
+    "docs"
   ],
   "author": "Isiah Meadows",
   "license": "ISC",
